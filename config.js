@@ -1,19 +1,19 @@
 // ============================================================
 //  CONFIG - Configuración centralizada
-//  Contiene todas las constantes, claves API y valores por defecto.
+//  Las claves sensibles ahora se leen desde variables de entorno
 // ============================================================
 
 const Config = {
-    // --- API ImgBB ---
-    IMG_BB_API_KEY: '5d37a7904ca0e4f184ddbe7d8fd96f2b',
+    // --- API ImgBB (desde variables de Netlify) ---
+    IMG_BB_API_KEY: process.env.IMG_BB_API_KEY || '5d37a7904ca0e4f184ddbe7d8fd96f2b',
     IMG_BB_UPLOAD_URL: 'https://api.imgbb.com/1/upload',
 
-    // --- Credenciales de administrador ---
+    // --- Credenciales de administrador (desde variables de Netlify) ---
     // TODO FASE 6: Reemplazar por Firebase Auth
-    ADMIN_USERNAME: 'admin',
-    ADMIN_PASSWORD: '1234',
+    ADMIN_USERNAME: process.env.ADMIN_USER || 'admin',
+    ADMIN_PASSWORD: process.env.ADMIN_PASS || '1234',
 
-    // --- Valores de la tienda ---
+    // --- Valores de la tienda (públicos) ---
     SHIPPING_COST: 10,
     ITEMS_PER_PAGE: 12,
     MAX_STARRED_PER_CATEGORY: 12,

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accesorios - EL BUNKER</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- ============================================================ -->
+    <!-- CONFIGURACIÓN DE CABECERA - Se aplica ANTES de que se muestre la página -->
+    <!-- ============================================================ -->
+    <script>
+    const __HEADER_CONFIG = (function() {
+        try {
+            const data = localStorage.getItem('bunker_header_config');
+            if (data) {
+                const config = JSON.parse(data);
+                return {
+                    tickerText: config.tickerText || "Tenemos nuevos ingresos de Vinilos, CDs Equipos Vintage y Accesorios",
+                    m1: config.m1 || "VINILOS",
+                    m2: config.m2 || "CDs",
+                    m3: config.m3 || "EQUIPOS",
+                    m4: config.m4 || "ACCESORIOS"
+                };
+            }
+        } catch(e) {}
+        return null;
+    })();
+
+    if (__HEADER_CONFIG) {
+        const ticker1 = document.getElementById('tickerGroup1');
+        const ticker2 = document.getElementById('tickerGroup2');
+        if (ticker1 && ticker2) {
+            const text = __HEADER_CONFIG.tickerText.trim();
+            const htmlText = `<span>${text} &nbsp;&nbsp;&bull;&nbsp;&nbsp;</span><span>${text} &nbsp;&nbsp;&bull;&nbsp;&nbsp;</span><span>${text} &nbsp;&nbsp;&bull;&nbsp;&nbsp;</span>`;
+            ticker1.innerHTML = htmlText;
+            ticker2.innerHTML = htmlText;
+        }
+        
+        const navMap = {
+            navVinilos: __HEADER_CONFIG.m1,
+            navCDs: __HEADER_CONFIG.m2,
+            navEquipos: __HEADER_CONFIG.m3,
+            navAccesorios: __HEADER_CONFIG.m4
+        };
+        for (const [id, text] of Object.entries(navMap)) {
+            const el = document.getElementById(id);
+            if (el) {
+                const icon = el.querySelector('i');
+                if (icon) {
+                    el.innerHTML = '';
+                    el.appendChild(icon);
+                    el.appendChild(document.createTextNode(' ' + text));
+                } else {
+                    el.textContent = text;
+                }
+            }
+        }
+    }
+    </script>
+</head>
+<body>
+<!-- SPINNER DE CARGA - Ahora oculta todo el contenido -->
+<div id="loadingSpinner" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0e0e10; z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
+    <div style="border:4px solid #f3f3f3; border-top:4px solid var(--color-gold); border-radius:50%; width:60px; height:60px; animation: spin 1s linear infinite;"></div>
+    <img src="assets/logo.png" alt="EL BUNKER" style="width:100px; margin-top:30px; filter:drop-shadow(0 0 20px rgba(211,47,47,0.5));">
+    <p style="color:#ffb300; margin-top:20px; font-weight:bold; font-size:18px; letter-spacing:2px;">EL BUNKER</p>
+    <p style="color:#888; margin-top:5px; font-size:13px;">Cargando tienda...</p>
+</div>
+<style>
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    body.loading > *:not(#loadingSpinner) {
+        display: none !important;
+    }
+    #loadingSpinner.active {
+        display: flex !important;
+    }
+</style>
+<!-- BANNER ANUNCIO SUPERIOR -->
+<div class="announcement-bar" id="announcementBar">
+    <div class="ticker-wrapper">
+        <div class="ticker-track">
+            <div class="ticker-group" id="tickerGroup1">
+                <span>Tenemos nuevos ingresos de Vinilos, CDs Equipos Vintage y Accesorios &nbsp;&nbsp;&bull;&nbsp;&nbsp;</span>
+            </div>
+            <div class="ticker-group" id="tickerGroup2">
+                <span>Tenemos nuevos ingresos de Vinilos, CDs Equipos Vintage y Accesorios &nbsp;&nbsp;&bull;&nbsp;&nbsp;</span>
+            </div>
+        </div>
+    </div>
+    <button class="close-announcement" id="closeAnnouncement" aria-label="Cerrar anuncio">&times;</button>
+</div>
+
+<!-- CABECERA -->
+<header>
+    <div class="container">
+        <div class="top-bar">
+            <a href="index.html" class="logo-rocker">
+                <img src="assets/logo.png" alt="Logo EL BUNKER" class="header-logo-img">
+                <div class="logo-text-block">
+                    <span class="logo-title">EL BUNKER</span>
+                    <span class="logo-subtitle">Tu tienda virtual</span>
+                </div>
+            </a>
+            <div class="search-bar">
+                <input type="text" id="globalSearchInput" placeholder="Buscar productos...">
+                <button id="globalSearchBtn"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="user-actions">
+                <div class="user-menu-dropdown">
+                    <i class="far fa-user" id="userMenuBtn" title="Cuenta / Administración"></i>
+                    <div class="dropdown-content" id="userDropdown">
+                        <div class="acciones-admin" style="display:none;">
+                            <a href="#" id="openAddProductModalBtn"><i class="fas fa-plus-circle"></i> Agregar producto</a>
+                            <a href="#" id="openInventoryModalBtn"><i class="fas fa-boxes"></i> Gestionar inventario</a>
+                        </div>
+                        <a href="#" id="loginAdminBtn"><i class="fas fa-sign-in-alt"></i> Iniciar sesión como admin</a>
+                        <a href="#" id="logoutAdminBtn" style="display:none;"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+                    </div>
+                </div>
+                <div class="cart-icon-wrapper" id="openCartModalBtn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cartCountBadge">0</span>
+                </div>
+                <span id="headerCartTotal">S/ 0.00</span>
+            </div>
+        </div>
+        <nav class="nav-bar">
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="pagA.html" id="navVinilos"><i class="fas fa-compact-disc"></i> Vinilos</a></li>
+                <li><a href="pagB.html" id="navCDs"><i class="fas fa-compact-disc"></i> CDs</a></li>
+                <li><a href="pagC.html" id="navEquipos"><i class="fas fa-blender"></i> Equipos</a></li>
+                <li class="active"><a href="pagD.html" id="navAccesorios"><i class="fas fa-headphones"></i> Accesorios</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<!-- BANNER CABECERA DE CATEGORÍA -->
+<section class="category-header-banner">
+    <div class="container banner-inner">
+        <div class="banner-vinyl-disc">
+            <div class="vinyl-center"></div>
+        </div>
+        <h1 class="banner-title">
+            <a href="index.html" class="back-arrow" style="color:inherit; text-decoration:none;">&larr;</a>
+            <span id="categoryBannerTitle">Accesorios</span>
+        </h1>
+    </div>
+</section>
+
+<!-- CATÁLOGO -->
+<section class="catalog-section">
+    <div class="container catalog-layout-full">
+        <main class="catalog-main">
+            <div class="catalog-grid" id="catalogGrid"></div>
+            <div class="catalog-pagination" id="catalogPagination"></div>
+        </main>
+    </div>
+</section>
+
+<!-- MODAL BUSQUEDA -->
+<div class="admin-modal-overlay" id="searchModal">
+    <div class="admin-modal-container" style="max-width:800px;">
+        <button class="modal-close-btn" id="closeSearchModal">&times;</button>
+        <h2 style="color:var(--color-gold); margin-bottom:15px;"><i class="fas fa-search"></i> Resultados de Búsqueda</h2>
+        <div id="searchResultsGrid" class="search-results-grid"></div>
+    </div>
+</div>
+
+<!-- MODAL CARRITO -->
+<div class="cart-modal-overlay" id="cartModal">
+    <div class="cart-modal-container">
+        <button class="modal-close-btn" id="closeCartModal">&times;</button>
+        <div class="cart-table-wrapper">
+            <table class="cart-table">
+                <thead>
+                    <tr><th></th><th>PRODUCTO</th><th>PRECIO</th><th>CANTIDAD</th><th>SUBTOTAL</th></tr>
+                </thead>
+                <tbody id="cartTableBody"></tbody>
+            </table>
+        </div>
+        <div class="cart-summary-box">
+            <h3>TOTALES DEL CARRITO</h3>
+            <div class="summary-row"><span>Subtotal</span><span id="modalCartSubtotal">S/ 0.00</span></div>
+            <div class="summary-row shipping-row">
+                <span style="font-weight:700;">Envío</span>
+                <div class="shipping-options">
+                    <label>
+                        <input type="radio" name="shippingMethod" value="10" checked id="shipDelivery">
+                        Delivery: <span class="price-highlight">S/ 10.00</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="shippingMethod" value="0" id="shipPickup">
+                        Recojo en Tienda Av. Brasil 1275 107B
+                    </label>
+                </div>
+            </div>
+            <div class="summary-row total-row"><span>Total</span><span id="modalCartTotal">S/ 0.00</span></div>
+            <button class="btn-checkout" id="btnFinalizePurchase">FINALIZAR COMPRA</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PRODUCTO CON IMÁGENES EXTRA (PANTALLA COMPLETA) -->
+<div class="product-modal-overlay" id="productModal">
+    <div class="product-modal-container">
+        <button class="modal-close-btn" id="closeProductModal">&times;</button>
+        <div class="modal-body-grid">
+            <div class="modal-image-col">
+                <div class="modal-img-wrapper">
+                    <button class="modal-nav-arrow left" id="modalPrevImg"><i class="fas fa-chevron-left"></i></button>
+                    <img id="modalProductImg" src="" alt="Producto">
+                    <button class="modal-nav-arrow right" id="modalNextImg"><i class="fas fa-chevron-right"></i></button>
+                    <div class="modal-image-indicator" id="modalImageIndicator">1/5</div>
+                </div>
+                <div class="modal-extra-images" id="modalExtraImages"></div>
+            </div>
+            <div class="modal-info-col">
+                <div class="breadcrumb-trail">Inicio / Accesorios / <span id="modalBreadcrumbTitle"></span></div>
+                <h1 class="modal-product-title" id="modalProductTitle"></h1>
+                <div class="modal-product-price" id="modalProductPrice"></div>
+                <div class="modal-description-box"><p id="modalDescription"></p></div>
+                <div class="modal-stock-status"><i class="fas fa-check-circle"></i> <span id="modalStockText">En stock</span></div>
+                <div class="modal-actions-row">
+                    <button class="btn-modal-cart" id="modalAddToCartBtn">AÑADIR AL CARRITO</button>
+                    <button class="btn-modal-buy" id="modalBuyNowBtn">COMPRAR AHORA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALES ADMIN -->
+<div class="acciones-admin" style="display:none;">
+    <!-- AGREGAR PRODUCTO -->
+    <div class="admin-modal-overlay" id="addProductModal">
+        <div class="admin-modal-container">
+            <button class="modal-close-btn" id="closeAddProductModal">&times;</button>
+            <h2>Agregar Nuevo Accesorio</h2>
+            <form id="addProductForm" class="admin-form">
+                <div class="form-group"><label>Nombre del Accesorio</label><input type="text" id="addFormTitle" required></div>
+                <div class="form-group-row">
+                    <div class="form-group" style="flex:1;"><label>Precio (ej. S/ 45.00)</label><input type="text" id="addFormPrice" required></div>
+                    <div class="form-group" style="flex:1;"><label>Stock</label><input type="text" id="addFormQuantity" required value="1"></div>
+                </div>
+                <div class="form-group">
+                    <label>Imagen principal</label>
+                    <input type="file" id="addFormImageFile" accept="image/*">
+                    <input type="hidden" id="addFormImage">
+                    <div id="addImagePreviewContainer" style="display:none; margin-top:8px;">
+                        <img id="addFormImagePreview" src="" style="max-width:100px; max-height:100px; object-fit:cover;">
+                        <span id="addUploadStatusText" style="font-size:12px; display:block;"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Imágenes adicionales (opcional, selecciona múltiples)</label>
+                    <input type="file" id="addExtraImagesInput" multiple accept="image/*">
+                    <div id="addExtraPreviews" class="extra-preview-wrapper"></div>
+                </div>
+                <div class="form-group checkbox-group"><label><input type="checkbox" id="addFormSoldOut"> Marcar como Agotado</label></div>
+                <div class="form-group"><label>Descripción / Contenido</label><textarea id="addFormDescription" rows="4"></textarea></div>
+                <div class="form-buttons"><button type="submit" class="btn-submit">Guardar Producto</button><button type="button" class="btn-cancel" id="btnCancelAddProduct">Cancelar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div class="admin-modal-overlay" id="inventoryModal">
+        <div class="admin-modal-container">
+            <button class="modal-close-btn" id="closeInventoryModal">&times;</button>
+            <h2>Gestionar Inventario (Accesorios)</h2>
+            <div id="adminProductsList" class="admin-products-list"></div>
+        </div>
+    </div>
+
+    <!-- EDITAR PRODUCTO -->
+    <div class="admin-modal-overlay" id="editProductModal">
+        <div class="admin-modal-container">
+            <button class="modal-close-btn" id="closeEditProductModal">&times;</button>
+            <h2>Editar Accesorio</h2>
+            <form id="editProductForm" class="admin-form">
+                <input type="hidden" id="editFormProductId">
+                <div class="form-group"><label>Nombre del Accesorio</label><input type="text" id="editFormTitle" required></div>
+                <div class="form-group-row">
+                    <div class="form-group" style="flex:1;"><label>Precio</label><input type="text" id="editFormPrice" required></div>
+                    <div class="form-group" style="flex:1;"><label>Stock</label><input type="text" id="editFormQuantity" required></div>
+                </div>
+                <div class="form-group">
+                    <label>Imagen principal</label>
+                    <input type="file" id="editFormImageFile" accept="image/*">
+                    <input type="hidden" id="editFormImage">
+                    <div id="editImagePreviewContainer" style="display:none; margin-top:8px;">
+                        <img id="editFormImagePreview" src="" style="max-width:100px; max-height:100px; object-fit:cover;">
+                        <span id="editUploadStatusText" style="font-size:12px; display:block;"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Imágenes adicionales (selecciona múltiples para añadir)</label>
+                    <input type="file" id="editExtraImagesInput" multiple accept="image/*">
+                    <div id="editExtraPreviews" class="extra-preview-wrapper"></div>
+                </div>
+                <div class="form-group checkbox-group"><label><input type="checkbox" id="editFormSoldOut"> Marcar como Agotado</label></div>
+                <div class="form-group"><label>Descripción</label><textarea id="editFormDescription" rows="4"></textarea></div>
+                <div class="form-buttons"><button type="submit" class="btn-submit">Guardar Cambios</button><button type="button" class="btn-cancel" id="btnCancelEditProduct">Cancelar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- LOGIN ADMIN -->
+<div class="admin-modal-overlay" id="loginModal">
+    <div class="admin-modal-container" style="max-width:400px;">
+        <button class="modal-close-btn" id="closeLoginModal">&times;</button>
+        <h2 style="color:var(--color-gold);">Acceso Administrador</h2>
+        <form id="loginForm" class="admin-form">
+            <div class="form-group"><label>Usuario</label><input type="text" id="loginUser" value="admin" required></div>
+            <div class="form-group"><label>Contraseña</label><input type="password" id="loginPass" value="1234" required></div>
+            <div class="form-buttons"><button type="submit" class="btn-submit">Ingresar</button><button type="button" class="btn-cancel" id="btnCancelLogin">Cancelar</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- PIE DE PÁGINA -->
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-logo-section">
+                <div class="logo-rocker footer-logo">
+                    <img src="assets/logo.png" alt="Logo EL BUNKER" class="header-logo-img">
+                    <div class="logo-text-block"><span class="logo-title">EL BUNKER</span><span class="logo-subtitle">Tu tienda virtual</span></div>
+                </div>
+                <p style="margin-top:10px;">El Bunker es una tienda para coleccionistas donde podrás encontrar cds primeras ediciones, vinilos de época, polos vintage, tourbooks importados de Japón y mucho más. compartimos nuestro amor por la música, pueden visitar nuestra tienda en Lima Perú.</p>
+            </div>
+            <div class="footer-links-section">
+                <h3>CONTACTO</h3>
+                <ul><li>923 386 655</li><li>Centro comercial cantuarias 140 ( stand 236) segundo piso, Lima, Peru</li></ul>
+            </div>
+        </div>
+        <div class="copyright-bar">&copy; 2026 EL BUNKER. Todos los derechos reservados</div>
+    </div>
+</footer>
+
+<!-- REDES SOCIALES -->
+<div class="social-sidebar-bottom">
+    <a href="https://www.facebook.com/ElbunkerPeru" target="_blank" class="social-btn facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+    <a href="https://www.instagram.com/elbunkermusicstore" target="_blank" class="social-btn instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
+    <a href="https://wa.me/51923386655" target="_blank" class="social-btn whatsapp" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+</div>
+
+<script src="config.js"></script>
+<script src="repository.js"></script>
+<script src="business.js"></script>
+<script src="ui.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

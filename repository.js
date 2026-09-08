@@ -5,12 +5,12 @@
 
 // 🔥 Inicializar Firebase
 const firebaseConfig = {
-    apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyBkKpSEfcoL1A78B1bUpNzoLmlpsCKWItw',
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'el-bunker-tienda.firebaseapp.com',
-    projectId: process.env.FIREBASE_PROJECT_ID || 'el-bunker-tienda',
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'el-bunker-tienda.firebasestorage.app',
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '1060177723143',
-    appId: process.env.FIREBASE_APP_ID || '1:1060177723143:web:f98e65cda0975daab78fa2'
+    apiKey: 'AIzaSyBkKpSEfcoL1A78B1bUpNzoLmlpsCKWItw',
+    authDomain: 'el-bunker-tienda.firebaseapp.com',
+    projectId: 'el-bunker-tienda',
+    storageBucket: 'el-bunker-tienda.firebasestorage.app',
+    messagingSenderId: '1060177723143',
+    appId: '1:1060177723143:web:f98e65cda0975daab78fa2'
 };
 
 // Inicializar Firebase solo si no está inicializado

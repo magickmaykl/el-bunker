@@ -3,15 +3,18 @@
 //  Las claves sensibles ahora se leen desde variables de entorno
 // ============================================================
 
+// 🔧 Verificar si estamos en Netlify (process.env existe) o en el navegador
+const isNetlify = typeof process !== 'undefined' && process.env;
+
 const Config = {
-    // --- API ImgBB (desde variables de Netlify) ---
-    IMG_BB_API_KEY: process.env.IMG_BB_API_KEY || '5d37a7904ca0e4f184ddbe7d8fd96f2b',
+    // --- API ImgBB ---
+    IMG_BB_API_KEY: isNetlify ? (process.env.IMG_BB_API_KEY || '5d37a7904ca0e4f184ddbe7d8fd96f2b') : '5d37a7904ca0e4f184ddbe7d8fd96f2b',
     IMG_BB_UPLOAD_URL: 'https://api.imgbb.com/1/upload',
 
-    // --- Credenciales de administrador (desde variables de Netlify) ---
+    // --- Credenciales de administrador ---
     // TODO FASE 6: Reemplazar por Firebase Auth
-    ADMIN_USERNAME: process.env.ADMIN_USER || 'admin',
-    ADMIN_PASSWORD: process.env.ADMIN_PASS || '1234',
+    ADMIN_USERNAME: isNetlify ? (process.env.ADMIN_USER || 'admin') : 'admin',
+    ADMIN_PASSWORD: isNetlify ? (process.env.ADMIN_PASS || '1234') : '1234',
 
     // --- Valores de la tienda (públicos) ---
     SHIPPING_COST: 10,

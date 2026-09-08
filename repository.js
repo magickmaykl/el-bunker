@@ -1,32 +1,124 @@
 // ============================================================
-//  REPOSITORIO - Capa de Acceso a Datos (DAL)
-//  TODAS las categorías usan minúsculas: 'vinilos', 'cds', 'equipos', 'accesorios'
+//  REPOSITORIO - CON FIRESTORE (Base de datos en la nube)
+//  CATEGORÍAS ESTANDARIZADAS: 'vinilos', 'cds', 'equipos', 'accesorios'
 // ============================================================
+
+// 🔥 Inicializar Firebase
+const firebaseConfig = {
+    apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyBkKpSEfcoL1A78B1bUpNzoLmlpsCKWItw',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'el-bunker-tienda.firebaseapp.com',
+    projectId: process.env.FIREBASE_PROJECT_ID || 'el-bunker-tienda',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'el-bunker-tienda.firebasestorage.app',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '1060177723143',
+    appId: process.env.FIREBASE_APP_ID || '1:1060177723143:web:f98e65cda0975daab78fa2'
+};
+
+// Inicializar Firebase solo si no está inicializado
+if (!firebase.apps || !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+const db = firebase.firestore();
 
 const Repository = (function() {
 
     const KEYS = Config.LS_KEYS;
+    let _productsCache = null;
 
-    function getData(key, defaultValue) {
+    // ============================================================
+    //  PRODUCTOS - FIRESTORE
+    // ============================================================
+
+    async function getProducts() {
+        if (_productsCache !== null) {
+            return _productsCache;
+        }
+
         try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : defaultValue;
-        } catch (e) {
-            console.warn(`Error al leer ${key}:`, e);
-            return defaultValue;
+            const snapshot = await db.collection('products').get();
+            const productos = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Asegurar que imagesExtra sea array
+                if (!data.imagesExtra) data.imagesExtra = [];
+                // Si no tiene id, usar el id del documento
+                if (!data.id) data.id = parseInt(doc.id) || doc.id;
+                productos.push(data);
+            });
+            _productsCache = productos;
+            return productos;
+        } catch (error) {
+            console.warn('Error al leer productos de Firestore:', error);
+            // Fallback a localStorage si Firestore falla
+            return getLocalProducts();
         }
     }
 
-    function setData(key, value) {
+    async function saveProducts(productos) {
         try {
-            localStorage.setItem(key, JSON.stringify(value));
-        } catch (e) {
-            console.error(`Error al guardar ${key}:`, e);
+            // Guardar en Firestore
+            const batch = db.batch();
+            productos.forEach(producto => {
+                const docRef = db.collection('products').doc(producto.id.toString());
+                batch.set(docRef, producto);
+            });
+            await batch.commit();
+            _productsCache = null;
+            // También guardar en localStorage como backup
+            saveLocalProducts(productos);
+            return true;
+        } catch (error) {
+            console.error('Error al guardar productos en Firestore:', error);
+            // Fallback a localStorage
+            saveLocalProducts(productos);
+            return false;
         }
     }
 
-    function simulateLatency(ms = 400) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    function getProductById(id) {
+        return getProducts().then(productos => 
+            productos.find(p => p.id === id) || null
+        );
+    }
+
+    async function addProduct(producto) {
+        const productos = await getProducts();
+        // Si no tiene id, generar uno
+        if (!producto.id) {
+            const maxId = productos.reduce((max, p) => Math.max(max, p.id || 0), 0);
+            producto.id = maxId + 1;
+        }
+        productos.push(producto);
+        await saveProducts(productos);
+        return producto;
+    }
+
+    async function updateProduct(id, updatedData) {
+        const productos = await getProducts();
+        const index = productos.findIndex(p => p.id === id);
+        if (index === -1) return null;
+        productos[index] = { ...productos[index], ...updatedData };
+        await saveProducts(productos);
+        return productos[index];
+    }
+
+    async function deleteProduct(id) {
+        let productos = await getProducts();
+        productos = productos.filter(p => p.id !== id);
+        await saveProducts(productos);
+        return productos;
+    }
+
+    // ============================================================
+    //  BACKUP LOCAL (FALLBACK)
+    // ============================================================
+
+    function getLocalProducts() {
+        return getData(KEYS.PRODUCTOS, getDefaultProducts());
+    }
+
+    function saveLocalProducts(productos) {
+        setData(KEYS.PRODUCTOS, productos);
     }
 
     function getDefaultProducts() {
@@ -40,73 +132,36 @@ const Repository = (function() {
             { id: 107, title: "AC/DC – Back In Black", priceNumber: 160.00, image: Config.DEFAULT_PLACEHOLDER_IMAGE, isSoldOut: false, quantity: 8, description: "Álbum clásico del rock.", starred: false, categoria: "vinilos", displayOrder: 7, imagesExtra: [] },
             { id: 108, title: "Guns N' Roses – Appetite For Destruction", priceNumber: 180.00, image: Config.DEFAULT_PLACEHOLDER_IMAGE, isSoldOut: false, quantity: 4, description: "Edición estándar en Vinilo.", starred: false, categoria: "vinilos", displayOrder: 8, imagesExtra: [] },
             { id: 109, title: "Queen – A Night At The Opera JP", priceNumber: 220.00, image: Config.DEFAULT_PLACEHOLDER_IMAGE, isSoldOut: false, quantity: 2, description: "Japón JP con inserto y OBI.", starred: false, categoria: "vinilos", displayOrder: 9, imagesExtra: [] },
-            { id: 110, title: "Led Zeppelin – Led Zeppelin IV", priceNumber: 170.00, image: Config.DEFAULT_PLACEHOLDER_IMAGE, isSoldOut: false, quantity: 5, description: "Gatefold prensado especial.", starred: false, categoria: "vinilos", displayOrder: 10, imagesExtra: [] },
-            { id: 201, title: "Daft Punk – Random Access Memories (CD)", priceNumber: 85.00, image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=500&auto=format&fit=crop", isSoldOut: false, quantity: 5, description: "CD Edición Japonesa con OBI.", starred: true, categoria: "cds", displayOrder: 1, imagesExtra: [] },
-            { id: 202, title: "Michael Jackson – Thriller (CD JP)", priceNumber: 95.00, image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=500&auto=format&fit=crop", isSoldOut: false, quantity: 3, description: "CD Edición Japonesa remasterizada.", starred: true, categoria: "cds", displayOrder: 2, imagesExtra: [] },
-            { id: 301, title: "Tornamesa Technics SL-1200MK2", priceNumber: 2400.00, image: "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=500&auto=format&fit=crop", isSoldOut: false, quantity: 1, description: "Tornamesa analógica profesional restaurada.", starred: true, categoria: "equipos", displayOrder: 1, imagesExtra: [] },
-            { id: 401, title: "Cepillo Antiestático de Fibra de Carbono", priceNumber: 45.00, image: "https://images.unsplash.com/photo-1583223667759-6c38b693e506?q=80&w=500&auto=format&fit=crop", isSoldOut: false, quantity: 10, description: "Cepillo pro para limpieza de discos de vinilo.", starred: true, categoria: "accesorios", displayOrder: 1, imagesExtra: [] }
+            { id: 110, title: "Led Zeppelin – Led Zeppelin IV", priceNumber: 170.00, image: Config.DEFAULT_PLACEHOLDER_IMAGE, isSoldOut: false, quantity: 5, description: "Gatefold prensado especial.", starred: false, categoria: "vinilos", displayOrder: 10, imagesExtra: [] }
         ];
     }
 
-    // ============================================================
-    //  PRODUCTOS
-    // ============================================================
-    async function getProducts() {
-        await simulateLatency(400);
-        let productos = getData(KEYS.PRODUCTOS, null);
-        if (!productos || !Array.isArray(productos) || productos.length === 0) {
-            productos = getDefaultProducts();
-            setData(KEYS.PRODUCTOS, productos);
-        } else {
-            let changed = false;
-            productos.forEach(p => {
-                if (!p.imagesExtra) {
-                    p.imagesExtra = [];
-                    changed = true;
-                }
-            });
-            if (changed) setData(KEYS.PRODUCTOS, productos);
+    function getData(key, defaultValue) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultValue;
+        } catch (e) {
+            return defaultValue;
         }
-        return productos;
     }
 
-    function saveProducts(productos) {
-        setData(KEYS.PRODUCTOS, productos);
-    }
-
-    function getProductById(id) {
-        const productos = getData(KEYS.PRODUCTOS, []);
-        return productos.find(p => p.id === id) || null;
-    }
-
-    function addProduct(producto) {
-        const productos = getData(KEYS.PRODUCTOS, []);
-        productos.push(producto);
-        saveProducts(productos);
-        return producto;
-    }
-
-    function updateProduct(id, updatedData) {
-        const productos = getData(KEYS.PRODUCTOS, []);
-        const index = productos.findIndex(p => p.id === id);
-        if (index === -1) return null;
-        productos[index] = { ...productos[index], ...updatedData };
-        saveProducts(productos);
-        return productos[index];
-    }
-
-    function deleteProduct(id) {
-        let productos = getData(KEYS.PRODUCTOS, []);
-        productos = productos.filter(p => p.id !== id);
-        saveProducts(productos);
-        return productos;
+    function setData(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (e) {}
     }
 
     // ============================================================
     //  CONFIGURACIONES
     // ============================================================
+
     async function getHeaderConfig() {
-        await simulateLatency(300);
+        try {
+            const doc = await db.collection('config').doc('header').get();
+            if (doc.exists) {
+                return doc.data();
+            }
+        } catch (e) {}
         return getData(KEYS.HEADER_CONFIG, {
             tickerText: "Tenemos nuevos ingresos de Vinilos, CDs Equipos Vintage y Accesorios",
             m1: "VINILOS",
@@ -117,11 +172,19 @@ const Repository = (function() {
     }
 
     function saveHeaderConfig(config) {
+        try {
+            db.collection('config').doc('header').set(config);
+        } catch (e) {}
         setData(KEYS.HEADER_CONFIG, config);
     }
 
     async function getCarouselConfig() {
-        await simulateLatency(300);
+        try {
+            const doc = await db.collection('config').doc('carousel').get();
+            if (doc.exists) {
+                return doc.data();
+            }
+        } catch (e) {}
         return getData(KEYS.CAROUSEL_CONFIG, {
             count: 6,
             slides: [
@@ -136,11 +199,19 @@ const Repository = (function() {
     }
 
     function saveCarouselConfig(config) {
+        try {
+            db.collection('config').doc('carousel').set(config);
+        } catch (e) {}
         setData(KEYS.CAROUSEL_CONFIG, config);
     }
 
     async function getCategoryConfig() {
-        await simulateLatency(300);
+        try {
+            const doc = await db.collection('config').doc('categories').get();
+            if (doc.exists) {
+                return doc.data();
+            }
+        } catch (e) {}
         return getData(KEYS.CATEGORY_CONFIG, {
             items: [
                 { title: "VINILOS JP", sub: "Nuevos Ingresos de Vinilos", img: "cat1.jpg" },
@@ -152,12 +223,16 @@ const Repository = (function() {
     }
 
     function saveCategoryConfig(config) {
+        try {
+            db.collection('config').doc('categories').set(config);
+        } catch (e) {}
         setData(KEYS.CATEGORY_CONFIG, config);
     }
 
     // ============================================================
     //  CARRITO
     // ============================================================
+
     function getCart() {
         return getData(KEYS.CART, []);
     }
@@ -167,9 +242,9 @@ const Repository = (function() {
     }
 
     // ============================================================
-    //  ADMINISTRACIÓN (Feature Toggle)
-    //  TODO FASE 6: Reemplazar por Firebase Auth
+    //  ADMIN SESSION
     // ============================================================
+
     function getAdminSession() {
         return getData(KEYS.ADMIN_SESSION, false);
     }
@@ -181,6 +256,7 @@ const Repository = (function() {
     // ============================================================
     //  EXPOSICIÓN PÚBLICA
     // ============================================================
+
     return {
         getProducts,
         saveProducts,

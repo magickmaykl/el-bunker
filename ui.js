@@ -54,7 +54,7 @@ const UI = (function() {
     }
 
     // ============================================================
-    //  CARRITO UI - CORREGIDO
+    //  CARRITO UI
     // ============================================================
     function updateCartUI() {
         const cart = Business.getCart();
@@ -214,7 +214,7 @@ const UI = (function() {
     }
 
     // ============================================================
-    //  ADMINISTRACIÓN (Feature Toggle)
+    //  ADMINISTRACIÓN
     // ============================================================
     
     function renderAdminList(productos, categoriaActual, onEdit) {
@@ -440,7 +440,7 @@ const UI = (function() {
     }
 
     // ============================================================
-    //  CARRUSEL Y CATEGORÍAS
+    //  CARRUSEL Y CATEGORÍAS - CORREGIDO RUTAS DE IMÁGENES
     // ============================================================
     function renderCarousel(carouselConfig) {
         const wrapper = document.getElementById('sliderWrapper');
@@ -458,8 +458,9 @@ const UI = (function() {
             const titleHtml = (slide.title && slide.title.trim() !== "") 
                 ? `<div class="slide-content"><h1>${slide.title}</h1></div>` 
                 : ``;
+            // ✅ CORREGIDO: Ruta con ./assets/ para Netlify
             slideDiv.innerHTML = `
-                <img src="assets/car${idx + 1}.png" alt="Carrusel ${idx + 1}" class="hero-png-img" onerror="this.onerror=null;this.src='${Config.DEFAULT_PLACEHOLDER_IMAGE}'">
+                <img src="./assets/car${idx + 1}.png" alt="Carrusel ${idx + 1}" class="hero-png-img" onerror="this.onerror=null;this.src='${Config.DEFAULT_PLACEHOLDER_IMAGE}'">
                 ${titleHtml}
             `;
             wrapper.appendChild(slideDiv);
@@ -534,7 +535,7 @@ const UI = (function() {
             const iEl = document.getElementById(`catImg${i}`);
             if (tEl) tEl.innerHTML = item.title;
             if (sEl) sEl.innerText = item.sub;
-            if (iEl) iEl.src = `assets/cat${i}.jpg`;
+            if (iEl) iEl.src = `./assets/cat${i}.jpg`;
         }
     }
 
@@ -580,8 +581,6 @@ const UI = (function() {
 
     // ============================================================
     //  PROCESAMIENTO DE IMÁGENES - SUBIDA DIRECTA A ImgBB
-    //  Mejorado: ahora sube como blob (archivo) en lugar de base64
-    //  Redimensiona a 500x500 con recorte cuadrado centrado
     // ============================================================
     function processImageFile(file) {
         return new Promise((resolve, reject) => {
@@ -590,7 +589,6 @@ const UI = (function() {
                 return;
             }
 
-            // Verificar que el archivo sea una imagen
             if (!file.type.startsWith('image/')) {
                 reject(new Error('El archivo no es una imagen válida.'));
                 return;
@@ -601,37 +599,30 @@ const UI = (function() {
                 const img = new Image();
                 img.onload = function() {
                     try {
-                        // Crear canvas para redimensionar
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         
-                        // Recorte cuadrado centrado
                         const size = Math.min(img.width, img.height);
                         const x = (img.width - size) / 2;
                         const y = (img.height - size) / 2;
                         
-                        // Tamaño de salida: 500x500 (suficiente para tienda virtual)
                         const outputSize = 500;
                         canvas.width = outputSize;
                         canvas.height = outputSize;
                         
-                        // Dibujar la imagen recortada y redimensionada
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(img, x, y, size, size, 0, 0, outputSize, outputSize);
                         
-                        // Convertir canvas a Blob (archivo) con compresión 0.7
                         canvas.toBlob(function(blob) {
                             if (!blob) {
                                 reject(new Error('Error al procesar la imagen.'));
                                 return;
                             }
                             
-                            // Verificar tamaño del blob - si es muy grande, comprimir más
-                            if (blob.size > 200 * 1024) { // > 200KB
+                            if (blob.size > 200 * 1024) {
                                 canvas.toBlob(function(compressedBlob) {
                                     if (!compressedBlob) {
-                                        // Si falla la compresión, usar el blob original
                                         subirABlob(blob, file.name, resolve, reject);
                                     } else {
                                         subirABlob(compressedBlob, file.name, resolve, reject);
@@ -658,12 +649,8 @@ const UI = (function() {
         });
     }
 
-    /**
-     * Sube un blob a ImgBB usando FormData
-     */
     function subirABlob(blob, originalFileName, resolve, reject) {
         const formData = new FormData();
-        // Crear un archivo a partir del blob
         const fileExtension = originalFileName ? originalFileName.split('.').pop() : 'webp';
         const fileName = `image_${Date.now()}.${fileExtension}`;
         formData.append('image', blob, fileName);
@@ -671,7 +658,7 @@ const UI = (function() {
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', Config.IMG_BB_UPLOAD_URL, true);
-        xhr.timeout = 30000; // 30 segundos de timeout
+        xhr.timeout = 30000;
         
         xhr.onload = function() {
             if (xhr.status === 200) {

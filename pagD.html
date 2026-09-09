@@ -364,5 +364,15 @@
 <script src="business.js"></script>
 <script src="ui.js"></script>
 <script src="script.js"></script>
+
+<script>
+    // Forzar renderizado del catálogo al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.renderCatalogPage === 'function') {
+            window.renderCatalogPage();
+        }
+    });
+</script>
+
 </body>
 </html>

@@ -3,6 +3,8 @@
 //  CATEGORÍAS ESTANDARIZADAS: 'vinilos', 'cds', 'equipos', 'accesorios'
 // ============================================================
 
+   let categoriaActual = '';
+
 document.addEventListener('DOMContentLoaded', async () => {
 
     const spinner = document.getElementById('loadingSpinner');
@@ -21,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let esAdmin = Business.getAdminSession();
         let currentPage = 1;
         const ITEMS_PER_PAGE = Config.ITEMS_PER_PAGE;
-        let categoriaActual = '';
+     
         const CATEGORIAS = Config.CATEGORIAS_LISTA;
 
         // ============================================================

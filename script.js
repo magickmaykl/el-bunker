@@ -1,9 +1,9 @@
 // ============================================================
 //  SCRIPT - Orquestador principal
-//  CATEGORÍAS ESTANDARIZADAS: 'vinilos', 'cds', 'equipos', 'accesorios'
 // ============================================================
 
-   window.categoriaActual = '';
+// ✅ CATEGORIA GLOBAL - DEFINIDA AL PRINCIPIO
+window.categoriaActual = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let esAdmin = Business.getAdminSession();
         let currentPage = 1;
         const ITEMS_PER_PAGE = Config.ITEMS_PER_PAGE;
-     
         const CATEGORIAS = Config.CATEGORIAS_LISTA;
 
         // ============================================================
@@ -54,8 +53,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         //  FUNCIONES DE RENDERIZADO
         // ============================================================
         window.renderCatalogPage = async function() {
+            if (!window.categoriaActual) {
+                console.warn('⚠️ categoriaActual no está definida. Reintentando...');
+                // Intentar detectar la categoría desde la URL
+                const pathName = window.location.pathname.toLowerCase();
+                if (pathName.includes('paga.html')) window.categoriaActual = Config.CATEGORIAS.VINILOS;
+                else if (pathName.includes('pagb.html')) window.categoriaActual = Config.CATEGORIAS.CDS;
+                else if (pathName.includes('pagc.html')) window.categoriaActual = Config.CATEGORIAS.EQUIPOS;
+                else if (pathName.includes('pagd.html')) window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
+            }
             const productos = await Business.getProductsByCategory(window.categoriaActual);
-            UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoriaActual);
+            UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, window.categoriaActual);
             window._catalogPageChangeCallback = (page) => {
                 currentPage = page;
                 window.renderCatalogPage();
@@ -74,8 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function renderAdminList() {
-            const productos = await Business.getProductsByCategory(categoriaActual);
-            UI.renderAdminList(productos, categoriaActual, (id) => {
+            const productos = await Business.getProductsByCategory(window.categoriaActual);
+            UI.renderAdminList(productos, window.categoriaActual, (id) => {
                 openEditModal(id);
             });
         }
@@ -84,11 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         //  FUNCIONES GLOBALES
         // ============================================================
         window.openProductModal = async function(id) {
-    const product = await Business.getProductById(id);
-    if (product) {
-        UI.openProductModal(product);
-    }
-};
+            const product = await Business.getProductById(id);
+            if (product) UI.openProductModal(product);
+        };
 
         window.Business = Business;
         window.UI = UI;
@@ -424,11 +430,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (pathName.includes('pagc.html')) window.categoriaActual = Config.CATEGORIAS.EQUIPOS;
             else if (pathName.includes('pagd.html')) window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
 
+            console.log('✅ Categoría detectada:', window.categoriaActual);
             await window.renderCatalogPage();
         }
 
         // ============================================================
-        //  ADMIN: AGREGAR PRODUCTO (SE EJECUTA EN TODAS LAS PÁGINAS)
+        //  ADMIN: AGREGAR PRODUCTO
         // ============================================================
         const addProductModal = document.getElementById('addProductModal');
         const openAddProductModalBtn = document.getElementById('openAddProductModalBtn');
@@ -551,7 +558,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const allProducts = await Business.getProducts();
-            const currentStarred = allProducts.filter(p => p.starred && p.categoria === categoriaActual).length;
+            const currentStarred = allProducts.filter(p => p.starred && p.categoria === window.categoriaActual).length;
             const newProduct = {
                 title: document.getElementById('addFormTitle').value,
                 priceNumber: parseFloat(document.getElementById('addFormPrice').value.replace(/[^0-9.]/g, '')) || 0,
@@ -560,7 +567,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 isSoldOut: document.getElementById('addFormSoldOut').checked,
                 description: document.getElementById('addFormDescription').value,
                 starred: currentStarred < Config.MAX_STARRED_PER_CATEGORY,
-                categoria: categoriaActual,
+                categoria: window.categoriaActual,
                 imagesExtra: extraUrls
             };
             await Business.addProduct(newProduct);

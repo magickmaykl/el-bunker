@@ -3,7 +3,7 @@
 //  CATEGORÍAS ESTANDARIZADAS: 'vinilos', 'cds', 'equipos', 'accesorios'
 // ============================================================
 
-   let categoriaActual = '';
+   window.categoriaActual = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const logoutBtn = document.getElementById('logoutAdminBtn');
             if (loginBtn) loginBtn.style.display = esAdmin ? 'none' : 'block';
             if (logoutBtn) logoutBtn.style.display = esAdmin ? 'block' : 'none';
-            if (categoriaActual) {
+            if (window.categoriaActual) {
                 window.renderCatalogPage();
             }
             if (document.getElementById('productGrid')) {
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         //  FUNCIONES DE RENDERIZADO
         // ============================================================
         window.renderCatalogPage = async function() {
-            const productos = await Business.getProductsByCategory(categoriaActual);
+            const productos = await Business.getProductsByCategory(window.categoriaActual);
             UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoriaActual);
             window._catalogPageChangeCallback = (page) => {
                 currentPage = page;
@@ -419,10 +419,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             //  PÁGINAS DE CATÁLOGO (pagA, pagB, pagC, pagD)
             // ============================================================
             const pathName = window.location.pathname.toLowerCase();
-            if (pathName.includes('paga.html')) categoriaActual = Config.CATEGORIAS.VINILOS;
-            else if (pathName.includes('pagb.html')) categoriaActual = Config.CATEGORIAS.CDS;
-            else if (pathName.includes('pagc.html')) categoriaActual = Config.CATEGORIAS.EQUIPOS;
-            else if (pathName.includes('pagd.html')) categoriaActual = Config.CATEGORIAS.ACCESORIOS;
+            if (pathName.includes('paga.html')) window.categoriaActual = Config.CATEGORIAS.VINILOS;
+            else if (pathName.includes('pagb.html')) window.categoriaActual = Config.CATEGORIAS.CDS;
+            else if (pathName.includes('pagc.html')) window.categoriaActual = Config.CATEGORIAS.EQUIPOS;
+            else if (pathName.includes('pagd.html')) window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
 
             await window.renderCatalogPage();
         }

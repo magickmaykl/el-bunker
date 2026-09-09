@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (loginBtn) loginBtn.style.display = esAdmin ? 'none' : 'block';
             if (logoutBtn) logoutBtn.style.display = esAdmin ? 'block' : 'none';
             if (window.categoriaActual) {
-                window.renderCatalogPage();
+    window.renderCatalogPage(window.categoriaActual);
+}
             }
             if (document.getElementById('productGrid')) {
                 renderFeaturedTabs();
@@ -52,24 +53,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         // ============================================================
         //  FUNCIONES DE RENDERIZADO
         // ============================================================
-        window.renderCatalogPage = async function() {
-            if (!window.categoriaActual) {
-                console.warn('⚠️ categoriaActual no está definida. Reintentando...');
-                // Intentar detectar la categoría desde la URL
-                const pathName = window.location.pathname.toLowerCase();
-                if (pathName.includes('paga.html')) window.categoriaActual = Config.CATEGORIAS.VINILOS;
-                else if (pathName.includes('pagb.html')) window.categoriaActual = Config.CATEGORIAS.CDS;
-                else if (pathName.includes('pagc.html')) window.categoriaActual = Config.CATEGORIAS.EQUIPOS;
-                else if (pathName.includes('pagd.html')) window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
-            }
-            const productos = await Business.getProductsByCategory(window.categoriaActual);
-            UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, window.categoriaActual);
-            window._catalogPageChangeCallback = (page) => {
-                currentPage = page;
-                window.renderCatalogPage();
-                window.scrollTo({ top: 300, behavior: 'smooth' });
-            };
-        };
+        window.renderCatalogPage = async function(categoria) {
+    // Si no se pasa categoría, intentar detectarla desde la URL
+    if (!categoria) {
+        const pathName = window.location.pathname.toLowerCase();
+        if (pathName.includes('paga.html')) categoria = Config.CATEGORIAS.VINILOS;
+        else if (pathName.includes('pagb.html')) categoria = Config.CATEGORIAS.CDS;
+        else if (pathName.includes('pagc.html')) categoria = Config.CATEGORIAS.EQUIPOS;
+        else if (pathName.includes('pagd.html')) categoria = Config.CATEGORIAS.ACCESORIOS;
+    }
+    if (!categoria) {
+        console.error('❌ No se pudo detectar la categoría');
+        return;
+    }
+    console.log('✅ Renderizando catálogo para:', categoria);
+    const productos = await Business.getProductsByCategory(categoria);
+    UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoria);
+   window._catalogPageChangeCallback = (page) => {
+    currentPage = page;
+    window.renderCatalogPage(categoria);
+    window.scrollTo({ top: 300, behavior: 'smooth' });
+};
+};
 
         async function renderFeaturedTabs() {
             const activeTab = document.querySelector('.tab-item.active');
@@ -431,7 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (pathName.includes('pagd.html')) window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
 
             console.log('✅ Categoría detectada:', window.categoriaActual);
-            await window.renderCatalogPage();
+            await window.renderCatalogPage(window.categoriaActual);
         }
 
         // ============================================================

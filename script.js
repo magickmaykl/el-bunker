@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (loginBtn) loginBtn.style.display = esAdmin ? 'none' : 'block';
             if (logoutBtn) logoutBtn.style.display = esAdmin ? 'block' : 'none';
             if (categoriaActual) {
-                renderCatalogPage();
+                window.renderCatalogPage();
             }
             if (document.getElementById('productGrid')) {
                 renderFeaturedTabs();
@@ -58,15 +58,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // ============================================================
         //  FUNCIONES DE RENDERIZADO
         // ============================================================
-        async function renderCatalogPage() {
-            const productos = await Business.getProductsByCategory(categoriaActual);
-            UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoriaActual);
-            window._catalogPageChangeCallback = (page) => {
-                currentPage = page;
-                renderCatalogPage();
-                window.scrollTo({ top: 300, behavior: 'smooth' });
-            };
-        }
+        window.renderCatalogPage = async function() {
+    const productos = await Business.getProductsByCategory(categoriaActual);
+    UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoriaActual);
+    window._catalogPageChangeCallback = (page) => {
+        currentPage = page;
+        window.renderCatalogPage();
+        window.scrollTo({ top: 300, behavior: 'smooth' });
+    };
+};
 
         async function renderFeaturedTabs() {
             const activeTab = document.querySelector('.tab-item.active');
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (pathName.includes('pagc.html')) categoriaActual = Config.CATEGORIAS.EQUIPOS;
             else if (pathName.includes('pagd.html')) categoriaActual = Config.CATEGORIAS.ACCESORIOS;
 
-            await renderCatalogPage();
+            await window.renderCatalogPage();
 
             // ============================================================
             //  ADMIN: AGREGAR PRODUCTO
@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await Business.addProduct(newProduct);
                 resetAddProductForm();
                 addProductModal.classList.remove('active');
-                await renderCatalogPage();
+                await window.renderCatalogPage();
                 UI.showToast("Producto guardado correctamente", "success");
             });
 
@@ -804,7 +804,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 await Business.updateProduct(idVal, updatedData);
                 editProductModal.classList.remove('active');
-                await renderCatalogPage();
+                await window.renderCatalogPage();
                 UI.showToast("Producto actualizado correctamente", "success");
             });
         }

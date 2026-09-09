@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (pathName.includes('pagd.html')) categoriaActual = Config.CATEGORIAS.ACCESORIOS;
 
             await window.renderCatalogPage();
-
+		}
             // ============================================================
             //  ADMIN: AGREGAR PRODUCTO
             // ============================================================

@@ -42,8 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (loginBtn) loginBtn.style.display = esAdmin ? 'none' : 'block';
             if (logoutBtn) logoutBtn.style.display = esAdmin ? 'block' : 'none';
             if (window.categoriaActual) {
-    window.renderCatalogPage(window.categoriaActual);
-}
+                window.renderCatalogPage(window.categoriaActual);
             }
             if (document.getElementById('productGrid')) {
                 renderFeaturedTabs();
@@ -54,27 +53,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         //  FUNCIONES DE RENDERIZADO
         // ============================================================
         window.renderCatalogPage = async function(categoria) {
-    // Si no se pasa categoría, intentar detectarla desde la URL
-    if (!categoria) {
-        const pathName = window.location.pathname.toLowerCase();
-        if (pathName.includes('paga.html')) categoria = Config.CATEGORIAS.VINILOS;
-        else if (pathName.includes('pagb.html')) categoria = Config.CATEGORIAS.CDS;
-        else if (pathName.includes('pagc.html')) categoria = Config.CATEGORIAS.EQUIPOS;
-        else if (pathName.includes('pagd.html')) categoria = Config.CATEGORIAS.ACCESORIOS;
-    }
-    if (!categoria) {
-        console.error('❌ No se pudo detectar la categoría');
-        return;
-    }
-    console.log('✅ Renderizando catálogo para:', categoria);
-    const productos = await Business.getProductsByCategory(categoria);
-    UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoria);
-   window._catalogPageChangeCallback = (page) => {
-    currentPage = page;
-    window.renderCatalogPage(categoria);
-    window.scrollTo({ top: 300, behavior: 'smooth' });
-};
-};
+            if (!categoria) {
+                const pathName = window.location.pathname.toLowerCase();
+                if (pathName.includes('paga.html')) categoria = Config.CATEGORIAS.VINILOS;
+                else if (pathName.includes('pagb.html')) categoria = Config.CATEGORIAS.CDS;
+                else if (pathName.includes('pagc.html')) categoria = Config.CATEGORIAS.EQUIPOS;
+                else if (pathName.includes('pagd.html')) categoria = Config.CATEGORIAS.ACCESORIOS;
+            }
+            if (!categoria) {
+                console.error('❌ No se pudo detectar la categoría');
+                return;
+            }
+            console.log('✅ Renderizando catálogo para:', categoria);
+            const productos = await Business.getProductsByCategory(categoria);
+            UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoria);
+            window._catalogPageChangeCallback = (page) => {
+                currentPage = page;
+                window.renderCatalogPage(categoria);
+                window.scrollTo({ top: 300, behavior: 'smooth' });
+            };
+        };
 
         async function renderFeaturedTabs() {
             const activeTab = document.querySelector('.tab-item.active');
@@ -579,7 +577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             resetAddProductForm();
             addProductModal.classList.remove('active');
             if (typeof window.renderCatalogPage === 'function') {
-                await window.renderCatalogPage();
+                await window.renderCatalogPage(window.categoriaActual);
             }
             UI.showToast("Producto guardado correctamente", "success");
         });
@@ -828,7 +826,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await Business.updateProduct(idVal, updatedData);
             editProductModal.classList.remove('active');
             if (typeof window.renderCatalogPage === 'function') {
-                await window.renderCatalogPage();
+                await window.renderCatalogPage(window.categoriaActual);
             }
             UI.showToast("Producto actualizado correctamente", "success");
         });
@@ -904,4 +902,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.classList.remove('loading');
         UI.showToast('Error al cargar los datos. Intenta recargar la página.', 'error');
     }
+
 });

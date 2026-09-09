@@ -1,14 +1,11 @@
 // ============================================================
 //  SCRIPT - Orquestador principal
-//  Inicializa la aplicación de forma asíncrona.
 //  CATEGORÍAS ESTANDARIZADAS: 'vinilos', 'cds', 'equipos', 'accesorios'
-//  TODO FASE 6: Reemplazar por Firebase Auth
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
 
     const spinner = document.getElementById('loadingSpinner');
-    // Ocultar todo el contenido mientras carga
     document.body.classList.add('loading');
     if (spinner) {
         spinner.style.display = 'flex';
@@ -21,10 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const categoryConfig = await Business.getCategoryConfig();
         await Business.getProducts();
 
-        // ============================================================
-        //  ADMINISTRACIÓN (Feature Toggle)
-        //  TODO FASE 6: Reemplazar por Firebase Auth
-        // ============================================================
         let esAdmin = Business.getAdminSession();
         let currentPage = 1;
         const ITEMS_PER_PAGE = Config.ITEMS_PER_PAGE;
@@ -59,14 +52,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         //  FUNCIONES DE RENDERIZADO
         // ============================================================
         window.renderCatalogPage = async function() {
-    const productos = await Business.getProductsByCategory(categoriaActual);
-    UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoriaActual);
-    window._catalogPageChangeCallback = (page) => {
-        currentPage = page;
-        window.renderCatalogPage();
-        window.scrollTo({ top: 300, behavior: 'smooth' });
-    };
-};
+            const productos = await Business.getProductsByCategory(categoriaActual);
+            UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoriaActual);
+            window._catalogPageChangeCallback = (page) => {
+                currentPage = page;
+                window.renderCatalogPage();
+                window.scrollTo({ top: 300, behavior: 'smooth' });
+            };
+        };
 
         async function renderFeaturedTabs() {
             const activeTab = document.querySelector('.tab-item.active');
@@ -86,12 +79,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // ============================================================
-        //  FUNCIONES GLOBALES - DEFINIDAS UNA SOLA VEZ PARA TODAS LAS PÁGINAS
+        //  FUNCIONES GLOBALES
         // ============================================================
-        window.openProductModal = function(id) {
-            const product = Business.getProductById(id);
-            if (product) UI.openProductModal(product);
-        };
+        window.openProductModal = async function(id) {
+    const product = await Business.getProductById(id);
+    if (product) {
+        UI.openProductModal(product);
+    }
+};
 
         window.Business = Business;
         window.UI = UI;
@@ -137,12 +132,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // --- Cerrar anuncio ---
         document.getElementById('closeAnnouncement')?.addEventListener('click', () => {
             document.getElementById('announcementBar').style.display = 'none';
         });
 
-        // --- Menú de usuario ---
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userMenuContainer = userMenuBtn ? userMenuBtn.closest('.user-menu-dropdown') : null;
         if (userMenuBtn && userMenuContainer) {
@@ -150,7 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.addEventListener('click', () => userMenuContainer.classList.remove('active'));
         }
 
-        // --- Carrito ---
         const cartModal = document.getElementById('cartModal');
         document.getElementById('openCartModalBtn')?.addEventListener('click', () => {
             UI.updateCartUI();
@@ -161,7 +153,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.querySelectorAll('input[name="shippingMethod"]').forEach(r => r.addEventListener('change', UI.updateCartUI));
 
-        // --- Finalizar compra ---
         document.getElementById('btnFinalizePurchase')?.addEventListener('click', () => {
             const cart = Business.getCart();
             if (cart.length === 0) {
@@ -185,7 +176,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.open(`https://wa.me/51923386655?text=${encodeURIComponent(text)}`, '_blank');
         });
 
-        // --- Búsqueda global ---
         const globalSearchInput = document.getElementById('globalSearchInput');
         const globalSearchBtn = document.getElementById('globalSearchBtn');
         function handleSearch() {
@@ -199,7 +189,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         globalSearchInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
         document.getElementById('closeSearchModal')?.addEventListener('click', UI.closeSearchModal);
 
-        // --- SLIDER (Carrusel) ---
         document.getElementById('prevSlide')?.addEventListener('click', () => {
             UI.prevSlide();
         });
@@ -208,7 +197,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             UI.nextSlide();
         });
 
-        // --- Modal de producto - Navegación de imágenes ---
         document.getElementById('modalPrevImg')?.addEventListener('click', () => {
             UI.prevProductImage();
         });
@@ -228,6 +216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         });
+
         document.getElementById('modalBuyNowBtn')?.addEventListener('click', () => {
             const modal = document.getElementById('productModal');
             const productId = parseInt(modal.dataset.productId);
@@ -240,6 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         });
+
         document.getElementById('closeProductModal')?.addEventListener('click', UI.closeProductModal);
 
         // ============================================================
@@ -251,6 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (userMenuContainer) userMenuContainer.classList.remove('active');
             loginModal.classList.add('active');
         });
+
         document.getElementById('logoutAdminBtn')?.addEventListener('click', (e) => {
             e.preventDefault();
             if (userMenuContainer) userMenuContainer.classList.remove('active');
@@ -259,6 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             actualizarVisibilidadAdmin();
             UI.showToast('Sesión de administrador cerrada.', 'info');
         });
+
         document.getElementById('closeLoginModal')?.addEventListener('click', () => loginModal.classList.remove('active'));
         document.getElementById('btnCancelLogin')?.addEventListener('click', () => loginModal.classList.remove('active'));
 
@@ -300,6 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     UI.renderFeatured(productos, currentTab);
                 });
             }
+
             document.querySelectorAll('.tab-item').forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
@@ -310,7 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             renderFeatured();
 
-            // --- Header Setting ---
+            // Header Setting
             const headerModal = document.getElementById('headerSettingModal');
             document.getElementById('openHeaderSettingModalBtn')?.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -323,6 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('menuName4').value = headerConfig.m4;
                 headerModal.classList.add('active');
             });
+
             document.getElementById('closeHeaderSettingModal')?.addEventListener('click', () => headerModal.classList.remove('active'));
             document.getElementById('btnCancelHeaderSetting')?.addEventListener('click', () => headerModal.classList.remove('active'));
 
@@ -341,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 UI.showToast("Ajustes de cabecera guardados.", "success");
             });
 
-            // --- Carousel Setting ---
+            // Carousel Setting
             const carouselModal = document.getElementById('carouselSettingModal');
             document.getElementById('openCarouselSettingModalBtn')?.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -388,7 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 UI.showToast("Ajustes de carrusel guardados.", "success");
             });
 
-            // --- Category Setting ---
+            // Category Setting
             const categoryModal = document.getElementById('categorySettingModal');
             document.getElementById('openCategorySettingModalBtn')?.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -400,6 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 categoryModal.classList.add('active');
             });
+
             document.getElementById('closeCategorySettingModal')?.addEventListener('click', () => categoryModal.classList.remove('active'));
             document.getElementById('btnCancelCategorySetting')?.addEventListener('click', () => categoryModal.classList.remove('active'));
 
@@ -428,39 +423,50 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (pathName.includes('pagd.html')) categoriaActual = Config.CATEGORIAS.ACCESORIOS;
 
             await window.renderCatalogPage();
-		}
-            // ============================================================
-            //  ADMIN: AGREGAR PRODUCTO
-            // ============================================================
-            const addProductModal = document.getElementById('addProductModal');
-            const openAddProductModalBtn = document.getElementById('openAddProductModalBtn');
-            let addExtraFiles = [];
+        }
 
-            function resetAddProductForm() {
-                const form = document.getElementById('addProductForm');
-                if (form) form.reset();
-                document.getElementById('addFormQuantity').value = '1';
-                document.getElementById('addFormImage').value = '';
-                document.getElementById('addImagePreviewContainer').style.display = 'none';
-                document.getElementById('addExtraPreviews').innerHTML = '';
-                addExtraFiles = [];
-                document.getElementById('addExtraImagesInput').value = '';
-            }
+        // ============================================================
+        //  ADMIN: AGREGAR PRODUCTO (SE EJECUTA EN TODAS LAS PÁGINAS)
+        // ============================================================
+        const addProductModal = document.getElementById('addProductModal');
+        const openAddProductModalBtn = document.getElementById('openAddProductModalBtn');
+        let addExtraFiles = [];
 
-            openAddProductModalBtn?.addEventListener('click', (e) => {
+        function resetAddProductForm() {
+            const form = document.getElementById('addProductForm');
+            if (form) form.reset();
+            document.getElementById('addFormQuantity').value = '1';
+            document.getElementById('addFormImage').value = '';
+            document.getElementById('addImagePreviewContainer').style.display = 'none';
+            document.getElementById('addExtraPreviews').innerHTML = '';
+            addExtraFiles = [];
+            document.getElementById('addExtraImagesInput').value = '';
+        }
+
+        if (openAddProductModalBtn) {
+            openAddProductModalBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
                 if (userMenuContainer) userMenuContainer.classList.remove('active');
                 resetAddProductForm();
                 addProductModal.classList.add('active');
             });
-            document.getElementById('closeAddProductModal')?.addEventListener('click', () => { addProductModal.classList.remove('active'); resetAddProductForm(); });
-            document.getElementById('btnCancelAddProduct')?.addEventListener('click', () => { addProductModal.classList.remove('active'); resetAddProductForm(); });
+        }
 
-            // Previsualización de imágenes adicionales (agregar)
-            const addExtraInput = document.getElementById('addExtraImagesInput');
-            const addExtraContainer = document.getElementById('addExtraPreviews');
-            addExtraInput?.addEventListener('change', function(e) {
+        document.getElementById('closeAddProductModal')?.addEventListener('click', () => { 
+            addProductModal.classList.remove('active'); 
+            resetAddProductForm(); 
+        });
+
+        document.getElementById('btnCancelAddProduct')?.addEventListener('click', () => { 
+            addProductModal.classList.remove('active'); 
+            resetAddProductForm(); 
+        });
+
+        const addExtraInput = document.getElementById('addExtraImagesInput');
+        const addExtraContainer = document.getElementById('addExtraPreviews');
+        if (addExtraInput) {
+            addExtraInput.addEventListener('change', function(e) {
                 const files = Array.from(this.files);
                 files.forEach(file => {
                     addExtraFiles.push(file);
@@ -512,201 +518,203 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 this.value = '';
             });
+        }
 
-            // -- EVENTO SUBMIT DEL FORMULARIO DE AGREGAR --
-            document.getElementById('addProductForm')?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
+        document.getElementById('addProductForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
 
-                const mainFileInput = document.getElementById('addFormImageFile');
-                let mainImageUrl = '';
-                if (mainFileInput.files[0]) {
-                    try {
-                        mainImageUrl = await UI.processImageFile(mainFileInput.files[0]);
-                    } catch (err) {
-                        UI.showToast('Error al subir la imagen principal: ' + err.message, 'error');
-                        return;
-                    }
-                } else {
-                    mainImageUrl = Config.DEFAULT_PLACEHOLDER_IMAGE;
+            const mainFileInput = document.getElementById('addFormImageFile');
+            let mainImageUrl = '';
+            if (mainFileInput && mainFileInput.files[0]) {
+                try {
+                    mainImageUrl = await UI.processImageFile(mainFileInput.files[0]);
+                } catch (err) {
+                    UI.showToast('Error al subir la imagen principal: ' + err.message, 'error');
+                    return;
                 }
+            } else {
+                mainImageUrl = Config.DEFAULT_PLACEHOLDER_IMAGE;
+            }
 
-                const extraUrls = [];
-                for (const file of addExtraFiles) {
-                    try {
-                        const url = await UI.processImageFile(file);
-                        extraUrls.push(url);
-                    } catch (err) {
-                        UI.showToast(`Error al subir imagen adicional: ${err.message}`, 'error');
-                        return;
-                    }
+            const extraUrls = [];
+            for (const file of addExtraFiles) {
+                try {
+                    const url = await UI.processImageFile(file);
+                    extraUrls.push(url);
+                } catch (err) {
+                    UI.showToast(`Error al subir imagen adicional: ${err.message}`, 'error');
+                    return;
                 }
+            }
 
-                const allProducts = await Business.getProducts();
-                const currentStarred = allProducts.filter(p => p.starred && p.categoria === categoriaActual).length;
-                const newProduct = {
-                    title: document.getElementById('addFormTitle').value,
-                    priceNumber: parseFloat(document.getElementById('addFormPrice').value.replace(/[^0-9.]/g, '')) || 0,
-                    quantity: parseInt(document.getElementById('addFormQuantity').value) || 0,
-                    image: mainImageUrl,
-                    isSoldOut: document.getElementById('addFormSoldOut').checked,
-                    description: document.getElementById('addFormDescription').value,
-                    starred: currentStarred < Config.MAX_STARRED_PER_CATEGORY,
-                    categoria: categoriaActual,
-                    imagesExtra: extraUrls
-                };
-                await Business.addProduct(newProduct);
-                resetAddProductForm();
-                addProductModal.classList.remove('active');
+            const allProducts = await Business.getProducts();
+            const currentStarred = allProducts.filter(p => p.starred && p.categoria === categoriaActual).length;
+            const newProduct = {
+                title: document.getElementById('addFormTitle').value,
+                priceNumber: parseFloat(document.getElementById('addFormPrice').value.replace(/[^0-9.]/g, '')) || 0,
+                quantity: parseInt(document.getElementById('addFormQuantity').value) || 0,
+                image: mainImageUrl,
+                isSoldOut: document.getElementById('addFormSoldOut').checked,
+                description: document.getElementById('addFormDescription').value,
+                starred: currentStarred < Config.MAX_STARRED_PER_CATEGORY,
+                categoria: categoriaActual,
+                imagesExtra: extraUrls
+            };
+            await Business.addProduct(newProduct);
+            resetAddProductForm();
+            addProductModal.classList.remove('active');
+            if (typeof window.renderCatalogPage === 'function') {
                 await window.renderCatalogPage();
-                UI.showToast("Producto guardado correctamente", "success");
+            }
+            UI.showToast("Producto guardado correctamente", "success");
+        });
+
+        // ============================================================
+        //  ADMIN: INVENTARIO
+        // ============================================================
+        const inventoryModal = document.getElementById('inventoryModal');
+        const openInventoryBtn = document.getElementById('openInventoryModalBtn');
+        if (openInventoryBtn) {
+            openInventoryBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
+                if (userMenuContainer) userMenuContainer.classList.remove('active');
+                await renderAdminList();
+                inventoryModal.classList.add('active');
+            });
+        }
+
+        document.getElementById('closeInventoryModal')?.addEventListener('click', () => inventoryModal.classList.remove('active'));
+
+        // ============================================================
+        //  ADMIN: EDITAR PRODUCTO
+        // ============================================================
+        const editProductModal = document.getElementById('editProductModal');
+        let editExtraFiles = [];
+
+        window.openEditModal = async function(id) {
+            if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
+            const prod = await Business.getProductById(id);
+            if (!prod) return;
+            inventoryModal.classList.remove('active');
+
+            document.getElementById('editFormProductId').value = prod.id;
+            document.getElementById('editFormTitle').value = prod.title;
+            document.getElementById('editFormPrice').value = `S/ ${prod.priceNumber.toFixed(2)}`;
+            document.getElementById('editFormQuantity').value = prod.quantity !== undefined ? prod.quantity : 1;
+            document.getElementById('editFormImage').value = prod.image;
+            document.getElementById('editFormSoldOut').checked = prod.isSoldOut;
+            document.getElementById('editFormDescription').value = prod.description || '';
+
+            const mainPreview = document.getElementById('editFormImagePreview');
+            const mainContainer = document.getElementById('editImagePreviewContainer');
+            if (mainPreview && mainContainer) {
+                mainPreview.src = prod.image;
+                mainContainer.style.display = 'block';
+            }
+
+            editExtraFiles = [];
+            const extraContainer = document.getElementById('editExtraPreviews');
+            extraContainer.innerHTML = '';
+            const extraImages = prod.imagesExtra || [];
+            extraImages.forEach((url, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'extra-preview-item';
+                wrapper.style.position = 'relative';
+                wrapper.style.display = 'inline-block';
+                wrapper.style.margin = '5px';
+
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'extra-preview-img';
+                img.style.width = '80px';
+                img.style.height = '80px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '4px';
+                img.style.border = '1px solid #444';
+
+                const removeBtn = document.createElement('span');
+                removeBtn.className = 'remove-extra-btn';
+                removeBtn.textContent = '✕';
+                removeBtn.style.cssText = `
+                    position: absolute;
+                    top: -8px;
+                    right: -8px;
+                    background: #b71c1c;
+                    color: #fff;
+                    border-radius: 50%;
+                    width: 22px;
+                    height: 22px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+                    border: 1px solid #fff;
+                    line-height: 1;
+                `;
+                removeBtn.addEventListener('click', function() {
+                    Business.deleteExtraImage(prod.id, url);
+                    window.openEditModal(prod.id);
+                });
+
+                const btnUp = document.createElement('button');
+                btnUp.innerHTML = '▲';
+                btnUp.title = 'Mover arriba';
+                btnUp.style.cssText = 'background:#444; color:#fff; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:12px; margin:2px;';
+                btnUp.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    Business.moveExtraImageUp(prod.id, idx);
+                    window.openEditModal(prod.id);
+                });
+
+                const btnDown = document.createElement('button');
+                btnDown.innerHTML = '▼';
+                btnDown.title = 'Mover abajo';
+                btnDown.style.cssText = 'background:#444; color:#fff; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:12px; margin:2px;';
+                btnDown.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    Business.moveExtraImageDown(prod.id, idx);
+                    window.openEditModal(prod.id);
+                });
+
+                const btnSetMain = document.createElement('button');
+                btnSetMain.textContent = '★';
+                btnSetMain.title = 'Establecer como principal';
+                btnSetMain.style.cssText = 'background:var(--color-gold); color:#000; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:12px; margin:2px; font-weight:bold;';
+                btnSetMain.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    Business.setProductMainImage(prod.id, url);
+                    window.openEditModal(prod.id);
+                });
+
+                const btnGroup = document.createElement('div');
+                btnGroup.style.cssText = 'display:flex; gap:2px; margin-top:4px; justify-content:center;';
+                btnGroup.appendChild(btnUp);
+                btnGroup.appendChild(btnDown);
+                btnGroup.appendChild(btnSetMain);
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(removeBtn);
+                wrapper.appendChild(btnGroup);
+                extraContainer.appendChild(wrapper);
             });
 
-            // ============================================================
-            //  ADMIN: INVENTARIO
-            // ============================================================
-            const inventoryModal = document.getElementById('inventoryModal');
-            const openInventoryBtn = document.getElementById('openInventoryModalBtn');
-            if (openInventoryBtn) {
-                openInventoryBtn.replaceWith(openInventoryBtn.cloneNode(true));
-                const newBtn = document.getElementById('openInventoryModalBtn');
-                newBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
-                    if (userMenuContainer) userMenuContainer.classList.remove('active');
-                    await renderAdminList();
-                    inventoryModal.classList.add('active');
-                });
-            }
-            document.getElementById('closeInventoryModal')?.addEventListener('click', () => inventoryModal.classList.remove('active'));
+            document.getElementById('editExtraImagesInput').value = '';
+            editProductModal.classList.add('active');
+        };
 
-            // ============================================================
-            //  ADMIN: EDITAR PRODUCTO
-            // ============================================================
-            const editProductModal = document.getElementById('editProductModal');
-            let editExtraFiles = [];
+        document.getElementById('closeEditProductModal')?.addEventListener('click', () => editProductModal.classList.remove('active'));
+        document.getElementById('btnCancelEditProduct')?.addEventListener('click', () => editProductModal.classList.remove('active'));
 
-            window.openEditModal = async function(id) {
-                if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
-                const prod = Business.getProductById(id);
-                if (!prod) return;
-                inventoryModal.classList.remove('active');
-
-                document.getElementById('editFormProductId').value = prod.id;
-                document.getElementById('editFormTitle').value = prod.title;
-                document.getElementById('editFormPrice').value = `S/ ${prod.priceNumber.toFixed(2)}`;
-                document.getElementById('editFormQuantity').value = prod.quantity !== undefined ? prod.quantity : 1;
-                document.getElementById('editFormImage').value = prod.image;
-                document.getElementById('editFormSoldOut').checked = prod.isSoldOut;
-                document.getElementById('editFormDescription').value = prod.description || '';
-
-                const mainPreview = document.getElementById('editFormImagePreview');
-                const mainContainer = document.getElementById('editImagePreviewContainer');
-                if (mainPreview && mainContainer) {
-                    mainPreview.src = prod.image;
-                    mainContainer.style.display = 'block';
-                }
-
-                editExtraFiles = [];
-                const extraContainer = document.getElementById('editExtraPreviews');
-                extraContainer.innerHTML = '';
-                const extraImages = prod.imagesExtra || [];
-                extraImages.forEach((url, idx) => {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'extra-preview-item';
-                    wrapper.style.position = 'relative';
-                    wrapper.style.display = 'inline-block';
-                    wrapper.style.margin = '5px';
-
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.className = 'extra-preview-img';
-                    img.style.width = '80px';
-                    img.style.height = '80px';
-                    img.style.objectFit = 'cover';
-                    img.style.borderRadius = '4px';
-                    img.style.border = '1px solid #444';
-
-                    const removeBtn = document.createElement('span');
-                    removeBtn.className = 'remove-extra-btn';
-                    removeBtn.textContent = '✕';
-                    removeBtn.style.cssText = `
-                        position: absolute;
-                        top: -8px;
-                        right: -8px;
-                        background: #b71c1c;
-                        color: #fff;
-                        border-radius: 50%;
-                        width: 22px;
-                        height: 22px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 14px;
-                        font-weight: bold;
-                        cursor: pointer;
-                        box-shadow: 0 0 4px rgba(0,0,0,0.5);
-                        border: 1px solid #fff;
-                        line-height: 1;
-                    `;
-                    removeBtn.addEventListener('click', function() {
-                        Business.deleteExtraImage(prod.id, url);
-                        openEditModal(prod.id);
-                    });
-
-                    const btnUp = document.createElement('button');
-                    btnUp.innerHTML = '▲';
-                    btnUp.title = 'Mover arriba';
-                    btnUp.style.cssText = 'background:#444; color:#fff; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:12px; margin:2px;';
-                    btnUp.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        Business.moveExtraImageUp(prod.id, idx);
-                        openEditModal(prod.id);
-                    });
-
-                    const btnDown = document.createElement('button');
-                    btnDown.innerHTML = '▼';
-                    btnDown.title = 'Mover abajo';
-                    btnDown.style.cssText = 'background:#444; color:#fff; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:12px; margin:2px;';
-                    btnDown.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        Business.moveExtraImageDown(prod.id, idx);
-                        openEditModal(prod.id);
-                    });
-
-                    const btnSetMain = document.createElement('button');
-                    btnSetMain.textContent = '★';
-                    btnSetMain.title = 'Establecer como principal';
-                    btnSetMain.style.cssText = 'background:var(--color-gold); color:#000; border:none; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:12px; margin:2px; font-weight:bold;';
-                    btnSetMain.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        Business.setProductMainImage(prod.id, url);
-                        openEditModal(prod.id);
-                    });
-
-                    const btnGroup = document.createElement('div');
-                    btnGroup.style.cssText = 'display:flex; gap:2px; margin-top:4px; justify-content:center;';
-                    btnGroup.appendChild(btnUp);
-                    btnGroup.appendChild(btnDown);
-                    btnGroup.appendChild(btnSetMain);
-
-                    wrapper.appendChild(img);
-                    wrapper.appendChild(removeBtn);
-                    wrapper.appendChild(btnGroup);
-                    extraContainer.appendChild(wrapper);
-                });
-
-                document.getElementById('editExtraImagesInput').value = '';
-                editProductModal.classList.add('active');
-            };
-
-            document.getElementById('closeEditProductModal')?.addEventListener('click', () => editProductModal.classList.remove('active'));
-            document.getElementById('btnCancelEditProduct')?.addEventListener('click', () => editProductModal.classList.remove('active'));
-
-            const editExtraInput2 = document.getElementById('editExtraImagesInput');
-            const editExtraContainer2 = document.getElementById('editExtraPreviews');
-            editExtraInput2?.addEventListener('change', function(e) {
+        const editExtraInput2 = document.getElementById('editExtraImagesInput');
+        const editExtraContainer2 = document.getElementById('editExtraPreviews');
+        if (editExtraInput2) {
+            editExtraInput2.addEventListener('change', function(e) {
                 const files = Array.from(this.files);
                 files.forEach(file => {
                     editExtraFiles.push(file);
@@ -758,56 +766,58 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 this.value = '';
             });
+        }
 
-            document.getElementById('editProductForm')?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
-                const idVal = parseInt(document.getElementById('editFormProductId').value);
-                const prod = Business.getProductById(idVal);
-                if (!prod) return;
+        document.getElementById('editProductForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!esAdmin) { UI.showToast('No tienes permisos.', 'error'); return; }
+            const idVal = parseInt(document.getElementById('editFormProductId').value);
+            const prod = await Business.getProductById(idVal);
+            if (!prod) return;
 
-                const updatedData = {
-                    title: document.getElementById('editFormTitle').value,
-                    priceNumber: parseFloat(document.getElementById('editFormPrice').value.replace(/[^0-9.]/g, '')) || 0,
-                    quantity: parseInt(document.getElementById('editFormQuantity').value) || 0,
-                    isSoldOut: document.getElementById('editFormSoldOut').checked,
-                    description: document.getElementById('editFormDescription').value,
-                };
+            const updatedData = {
+                title: document.getElementById('editFormTitle').value,
+                priceNumber: parseFloat(document.getElementById('editFormPrice').value.replace(/[^0-9.]/g, '')) || 0,
+                quantity: parseInt(document.getElementById('editFormQuantity').value) || 0,
+                isSoldOut: document.getElementById('editFormSoldOut').checked,
+                description: document.getElementById('editFormDescription').value,
+            };
 
-                const mainFileInput = document.getElementById('editFormImageFile');
-                if (mainFileInput && mainFileInput.files[0]) {
-                    try {
-                        updatedData.image = await UI.processImageFile(mainFileInput.files[0]);
-                    } catch (err) {
-                        UI.showToast('Error al subir la imagen principal: ' + err.message, 'error');
-                        return;
-                    }
-                }
-
-                const newExtraUrls = [];
-                for (const file of editExtraFiles) {
-                    try {
-                        const url = await UI.processImageFile(file);
-                        newExtraUrls.push(url);
-                    } catch (err) {
-                        UI.showToast(`Error al subir imagen adicional: ${err.message}`, 'error');
-                        return;
-                    }
-                }
-                const currentExtras = prod.imagesExtra || [];
-                const total = currentExtras.length + newExtraUrls.length;
-                if (total > 4) {
-                    UI.showToast(`Solo se permiten hasta 4 imágenes adicionales. Actualmente tienes ${currentExtras.length} y estás agregando ${newExtraUrls.length}.`, 'error');
+            const mainFileInput = document.getElementById('editFormImageFile');
+            if (mainFileInput && mainFileInput.files[0]) {
+                try {
+                    updatedData.image = await UI.processImageFile(mainFileInput.files[0]);
+                } catch (err) {
+                    UI.showToast('Error al subir la imagen principal: ' + err.message, 'error');
                     return;
                 }
-                updatedData.imagesExtra = [...currentExtras, ...newExtraUrls];
+            }
 
-                await Business.updateProduct(idVal, updatedData);
-                editProductModal.classList.remove('active');
+            const newExtraUrls = [];
+            for (const file of editExtraFiles) {
+                try {
+                    const url = await UI.processImageFile(file);
+                    newExtraUrls.push(url);
+                } catch (err) {
+                    UI.showToast(`Error al subir imagen adicional: ${err.message}`, 'error');
+                    return;
+                }
+            }
+            const currentExtras = prod.imagesExtra || [];
+            const total = currentExtras.length + newExtraUrls.length;
+            if (total > 4) {
+                UI.showToast(`Solo se permiten hasta 4 imágenes adicionales. Actualmente tienes ${currentExtras.length} y estás agregando ${newExtraUrls.length}.`, 'error');
+                return;
+            }
+            updatedData.imagesExtra = [...currentExtras, ...newExtraUrls];
+
+            await Business.updateProduct(idVal, updatedData);
+            editProductModal.classList.remove('active');
+            if (typeof window.renderCatalogPage === 'function') {
                 await window.renderCatalogPage();
-                UI.showToast("Producto actualizado correctamente", "success");
-            });
-        }
+            }
+            UI.showToast("Producto actualizado correctamente", "success");
+        });
 
         // ============================================================
         //  FUNCIÓN AUXILIAR: APLICAR CONFIGURACIÓN DE CABECERA
@@ -864,7 +874,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         UI.updateCartUI();
         actualizarVisibilidadAdmin();
 
-        // Ocultar spinner y mostrar contenido
         if (spinner) {
             spinner.style.display = 'none';
             spinner.classList.remove('active');

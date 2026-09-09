@@ -30,29 +30,32 @@ const Repository = (function() {
     // ============================================================
 
     async function getProducts() {
-        if (_productsCache !== null) {
-            return _productsCache;
-        }
-
-        try {
-            const snapshot = await db.collection('products').get();
-            const productos = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                // Asegurar que imagesExtra sea array
-                if (!data.imagesExtra) data.imagesExtra = [];
-                // Si no tiene id, usar el id del documento
-                if (!data.id) data.id = parseInt(doc.id) || doc.id;
-                productos.push(data);
-            });
-            _productsCache = productos;
-            return productos;
-        } catch (error) {
-            console.warn('Error al leer productos de Firestore:', error);
-            // Fallback a localStorage si Firestore falla
-            return getLocalProducts();
-        }
+    if (_productsCache !== null) {
+        return _productsCache;
     }
+
+    try {
+        const snapshot = await db.collection('products').get();
+        const productos = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Asegurar que imagesExtra sea array
+            if (!data.imagesExtra) data.imagesExtra = [];
+            // Si no tiene id, usar el id del documento
+            if (!data.id) data.id = parseInt(doc.id) || doc.id;
+            // ✅ CONVERTIR TODOS LOS NÚMEROS
+            data.priceNumber = parseFloat(data.priceNumber) || 0;
+            data.quantity = parseInt(data.quantity) || 0;
+            data.displayOrder = parseInt(data.displayOrder) || 0;
+            productos.push(data);
+        });
+        _productsCache = productos;
+        return productos;
+    } catch (error) {
+        console.warn('Error al leer productos de Firestore:', error);
+        return getLocalProducts();
+    }
+}
 
     async function saveProducts(productos) {
         try {

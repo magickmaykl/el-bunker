@@ -26,21 +26,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         const CATEGORIAS = Config.CATEGORIAS_LISTA;
 
         // ============================================================
-        //  DETECTAR PÁGINA DE CATÁLOGO POR URL (ANTES de isIndex)
+        //  DETECTAR PÁGINA DE CATÁLOGO POR URL
+        //  Acepta tanto /paga.html como /paga (sin extensión)
         // ============================================================
         const pathName = window.location.pathname.toLowerCase();
         let esPaginaDeCatalogo = false;
         
-        if (pathName.includes('paga.html')) {
+        if (pathName.includes('paga')) {
             window.categoriaActual = Config.CATEGORIAS.VINILOS;
             esPaginaDeCatalogo = true;
-        } else if (pathName.includes('pagb.html')) {
+        } else if (pathName.includes('pagb')) {
             window.categoriaActual = Config.CATEGORIAS.CDS;
             esPaginaDeCatalogo = true;
-        } else if (pathName.includes('pagc.html')) {
+        } else if (pathName.includes('pagc')) {
             window.categoriaActual = Config.CATEGORIAS.EQUIPOS;
             esPaginaDeCatalogo = true;
-        } else if (pathName.includes('pagd.html')) {
+        } else if (pathName.includes('pagd')) {
             window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
             esPaginaDeCatalogo = true;
         }
@@ -79,10 +80,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.renderCatalogPage = async function(categoria) {
             if (!categoria) {
                 const pathNameLocal = window.location.pathname.toLowerCase();
-                if (pathNameLocal.includes('paga.html')) categoria = Config.CATEGORIAS.VINILOS;
-                else if (pathNameLocal.includes('pagb.html')) categoria = Config.CATEGORIAS.CDS;
-                else if (pathNameLocal.includes('pagc.html')) categoria = Config.CATEGORIAS.EQUIPOS;
-                else if (pathNameLocal.includes('pagd.html')) categoria = Config.CATEGORIAS.ACCESORIOS;
+                if (pathNameLocal.includes('paga')) categoria = Config.CATEGORIAS.VINILOS;
+                else if (pathNameLocal.includes('pagb')) categoria = Config.CATEGORIAS.CDS;
+                else if (pathNameLocal.includes('pagc')) categoria = Config.CATEGORIAS.EQUIPOS;
+                else if (pathNameLocal.includes('pagd')) categoria = Config.CATEGORIAS.ACCESORIOS;
             }
             if (!categoria) {
                 console.error('❌ No se pudo detectar la categoría');
@@ -596,7 +597,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             await Business.addProduct(newProduct);
             resetAddProductForm();
             addProductModal.classList.remove('active');
-            // ✅ FORZAR ACTUALIZACIÓN DEL CATÁLOGO
             Business.invalidateProductsCache();
             if (typeof window.renderCatalogPage === 'function') {
                 await window.renderCatalogPage(window.categoriaActual);
@@ -892,10 +892,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (bannerTitle) {
                 const path = window.location.pathname.toLowerCase();
                 let key = '';
-                if (path.includes('paga.html')) key = 'm1';
-                else if (path.includes('pagb.html')) key = 'm2';
-                else if (path.includes('pagc.html')) key = 'm3';
-                else if (path.includes('pagd.html')) key = 'm4';
+                if (path.includes('paga')) key = 'm1';
+                else if (path.includes('pagb')) key = 'm2';
+                else if (path.includes('pagc')) key = 'm3';
+                else if (path.includes('pagd')) key = 'm4';
                 if (key && config[key]) {
                     bannerTitle.textContent = config[key];
                 }

@@ -26,6 +26,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         const CATEGORIAS = Config.CATEGORIAS_LISTA;
 
         // ============================================================
+        //  DETECTAR PÁGINA DE CATÁLOGO POR URL (ANTES de isIndex)
+        // ============================================================
+        const pathName = window.location.pathname.toLowerCase();
+        let esPaginaDeCatalogo = false;
+        
+        if (pathName.includes('paga.html')) {
+            window.categoriaActual = Config.CATEGORIAS.VINILOS;
+            esPaginaDeCatalogo = true;
+        } else if (pathName.includes('pagb.html')) {
+            window.categoriaActual = Config.CATEGORIAS.CDS;
+            esPaginaDeCatalogo = true;
+        } else if (pathName.includes('pagc.html')) {
+            window.categoriaActual = Config.CATEGORIAS.EQUIPOS;
+            esPaginaDeCatalogo = true;
+        } else if (pathName.includes('pagd.html')) {
+            window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
+            esPaginaDeCatalogo = true;
+        }
+
+        console.log('🔍 pathname:', pathName);
+        console.log('🔍 esPaginaDeCatalogo:', esPaginaDeCatalogo);
+        console.log('🔍 categoriaActual:', window.categoriaActual);
+
+        // ============================================================
         //  FUNCIONES DE VISIBILIDAD ADMIN
         // ============================================================
         function actualizarVisibilidadAdmin() {
@@ -54,18 +78,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         // ============================================================
         window.renderCatalogPage = async function(categoria) {
             if (!categoria) {
-                const pathName = window.location.pathname.toLowerCase();
-                if (pathName.includes('paga.html')) categoria = Config.CATEGORIAS.VINILOS;
-                else if (pathName.includes('pagb.html')) categoria = Config.CATEGORIAS.CDS;
-                else if (pathName.includes('pagc.html')) categoria = Config.CATEGORIAS.EQUIPOS;
-                else if (pathName.includes('pagd.html')) categoria = Config.CATEGORIAS.ACCESORIOS;
+                const pathNameLocal = window.location.pathname.toLowerCase();
+                if (pathNameLocal.includes('paga.html')) categoria = Config.CATEGORIAS.VINILOS;
+                else if (pathNameLocal.includes('pagb.html')) categoria = Config.CATEGORIAS.CDS;
+                else if (pathNameLocal.includes('pagc.html')) categoria = Config.CATEGORIAS.EQUIPOS;
+                else if (pathNameLocal.includes('pagd.html')) categoria = Config.CATEGORIAS.ACCESORIOS;
             }
             if (!categoria) {
                 console.error('❌ No se pudo detectar la categoría');
                 return;
             }
             console.log('✅ Renderizando catálogo para:', categoria);
-            // ✅ FORZAR RECARGA DE CACHÉ
             Business.invalidateProductsCache();
             const productos = await Business.getProductsByCategory(categoria);
             console.log('📦 Productos encontrados:', productos.length);
@@ -286,7 +309,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // ============================================================
         //  ADMIN: CONFIGURACIONES (solo en index)
         // ============================================================
-        const isIndex = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname === '';
+        const isIndex = !esPaginaDeCatalogo;
 
         if (isIndex) {
             UI.renderCarousel(carouselConfig);
@@ -428,15 +451,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } else {
             // ============================================================
-            //  PÁGINAS DE CATÁLOGO (pagA, pagB, pagC, pagD)
+            //  PÁGINAS DE CATÁLOGO - RENDERIZAR
             // ============================================================
-            const pathName = window.location.pathname.toLowerCase();
-            if (pathName.includes('paga.html')) window.categoriaActual = Config.CATEGORIAS.VINILOS;
-            else if (pathName.includes('pagb.html')) window.categoriaActual = Config.CATEGORIAS.CDS;
-            else if (pathName.includes('pagc.html')) window.categoriaActual = Config.CATEGORIAS.EQUIPOS;
-            else if (pathName.includes('pagd.html')) window.categoriaActual = Config.CATEGORIAS.ACCESORIOS;
-
-            console.log('✅ Categoría detectada:', window.categoriaActual);
+            console.log('✅ Renderizando catálogo en página:', window.categoriaActual);
             await window.renderCatalogPage(window.categoriaActual);
         }
 
@@ -580,6 +597,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             resetAddProductForm();
             addProductModal.classList.remove('active');
             // ✅ FORZAR ACTUALIZACIÓN DEL CATÁLOGO
+            Business.invalidateProductsCache();
             if (typeof window.renderCatalogPage === 'function') {
                 await window.renderCatalogPage(window.categoriaActual);
             }
@@ -829,6 +847,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             await Business.updateProduct(idVal, updatedData);
             editProductModal.classList.remove('active');
+            Business.invalidateProductsCache();
             if (typeof window.renderCatalogPage === 'function') {
                 await window.renderCatalogPage(window.categoriaActual);
             }

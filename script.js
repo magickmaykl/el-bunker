@@ -65,7 +65,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             console.log('✅ Renderizando catálogo para:', categoria);
+            // ✅ FORZAR RECARGA DE CACHÉ
+            Business.invalidateProductsCache();
             const productos = await Business.getProductsByCategory(categoria);
+            console.log('📦 Productos encontrados:', productos.length);
             UI.renderCatalog(productos, currentPage, ITEMS_PER_PAGE, esAdmin, categoria);
             window._catalogPageChangeCallback = (page) => {
                 currentPage = page;
@@ -576,6 +579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await Business.addProduct(newProduct);
             resetAddProductForm();
             addProductModal.classList.remove('active');
+            // ✅ FORZAR ACTUALIZACIÓN DEL CATÁLOGO
             if (typeof window.renderCatalogPage === 'function') {
                 await window.renderCatalogPage(window.categoriaActual);
             }

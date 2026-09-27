@@ -84,6 +84,11 @@ const Business = (function() {
         return _productsCache;
     }
 
+    // ✅ NUEVA FUNCIÓN: FORZAR RECARGA DE CACHÉ
+    function invalidateProductsCache() {
+        _productsCache = null;
+    }
+
     function getProductById(id) {
         return Repository.getProductById(id);
     }
@@ -330,6 +335,7 @@ const Business = (function() {
         getCartSubtotal,
         getCartTotal,
         getProducts,
+        invalidateProductsCache,  // ✅ NUEVA FUNCIÓN
         getProductById,
         getProductsByCategory,
         addProduct,

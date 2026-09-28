@@ -200,9 +200,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             let text = "¡Hola EL BUNKER! Quisiera realizar el siguiente pedido:\n\n";
             let subtotal = 0;
             cart.forEach(item => {
-                const itemSub = item.price * item.quantity;
+                const price = parseFloat(item.price) || 0;
+                const quantity = parseInt(item.quantity) || 0;
+                const itemSub = price * quantity;
                 subtotal += itemSub;
-                text += `• ${item.title} x${item.quantity} - S/ ${itemSub.toFixed(2)}\n`;
+                text += `• ${item.title} x${quantity} - S/ ${itemSub.toFixed(2)}\n`;
             });
             const shippingOption = document.querySelector('input[name="shippingMethod"]:checked');
             const shippingCost = shippingOption ? parseFloat(shippingOption.value) : Config.SHIPPING_COST;
@@ -243,29 +245,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             UI.nextProductImage();
         });
 
-        document.getElementById('modalAddToCartBtn')?.addEventListener('click', () => {
+        // ============================================================
+        //  MODAL PRODUCTO: AÑADIR AL CARRITO (CORREGIDO)
+        // ============================================================
+        document.getElementById('modalAddToCartBtn')?.addEventListener('click', async () => {
             const modal = document.getElementById('productModal');
             const productId = parseInt(modal.dataset.productId);
-            if (productId) {
-                const product = Business.getProductById(productId);
-                if (product && !product.isSoldOut) {
-                    Business.addToCart(product);
-                    UI.closeProductModal();
-                }
+            if (!productId) return;
+            
+            const product = await Business.getProductById(productId);
+            if (product && !product.isSoldOut) {
+                Business.addToCart(product);
+                UI.closeProductModal();
+            } else {
+                UI.showToast('Producto no disponible.', 'error');
             }
         });
 
-        document.getElementById('modalBuyNowBtn')?.addEventListener('click', () => {
+        // ============================================================
+        //  MODAL PRODUCTO: COMPRAR AHORA (CORREGIDO)
+        // ============================================================
+        document.getElementById('modalBuyNowBtn')?.addEventListener('click', async () => {
             const modal = document.getElementById('productModal');
             const productId = parseInt(modal.dataset.productId);
-            if (productId) {
-                const product = Business.getProductById(productId);
-                if (product) {
-                    const text = `¡Hola EL BUNKER! Quiero comprar el siguiente producto:\n\n• ${product.title} - S/ ${product.priceNumber.toFixed(2)}\n\nGracias.`;
-                    window.open(`https://wa.me/51923386655?text=${encodeURIComponent(text)}`, '_blank');
-                    UI.closeProductModal();
-                }
+            if (!productId) return;
+            
+            const product = await Business.getProductById(productId);
+            if (!product) {
+                UI.showToast('Producto no encontrado.', 'error');
+                return;
             }
+            
+            const precio = parseFloat(product.priceNumber || 0).toFixed(2);
+            const text = `¡Hola EL BUNKER! Quiero comprar el siguiente producto:\n\n• ${product.title} - S/ ${precio}\n\nGracias.`;
+            const url = `https://wa.me/51923386655?text=${encodeURIComponent(text)}`;
+            
+            console.log('🛒 Abriendo WhatsApp:', url);
+            window.open(url, '_blank');
+            UI.closeProductModal();
         });
 
         document.getElementById('closeProductModal')?.addEventListener('click', UI.closeProductModal);
@@ -636,7 +653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('editFormProductId').value = prod.id;
             document.getElementById('editFormTitle').value = prod.title;
-            document.getElementById('editFormPrice').value = `S/ ${prod.priceNumber.toFixed(2)}`;
+            document.getElementById('editFormPrice').value = `S/ ${parseFloat(prod.priceNumber || 0).toFixed(2)}`;
             document.getElementById('editFormQuantity').value = prod.quantity !== undefined ? prod.quantity : 1;
             document.getElementById('editFormImage').value = prod.image;
             document.getElementById('editFormSoldOut').checked = prod.isSoldOut;

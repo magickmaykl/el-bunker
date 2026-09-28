@@ -20,7 +20,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const categoryConfig = await Business.getCategoryConfig();
         await Business.getProducts();
 
-        let esAdmin = Business.getAdminSession();
+        let esAdmin = false;
+        
+        // ✅ Verificar sesión activa de Firebase al cargar
+        Business.onAuthChange((session) => {
+            if (session.loggedIn) {
+                esAdmin = true;
+                Business.saveAdminSession(true);
+                actualizarVisibilidadAdmin();
+                console.log('✅ Sesión Firebase activa:', session.email);
+            } else {
+                esAdmin = false;
+                Business.saveAdminSession(false);
+                actualizarVisibilidadAdmin();
+            }
+        });
         let currentPage = 1;
         const ITEMS_PER_PAGE = Config.ITEMS_PER_PAGE;
         const CATEGORIAS = Config.CATEGORIAS_LISTA;
@@ -200,11 +214,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             let text = "¡Hola EL BUNKER! Quisiera realizar el siguiente pedido:\n\n";
             let subtotal = 0;
             cart.forEach(item => {
-                const price = parseFloat(item.price) || 0;
-                const quantity = parseInt(item.quantity) || 0;
-                const itemSub = price * quantity;
+                const itemSub = item.price * item.quantity;
                 subtotal += itemSub;
-                text += `• ${item.title} x${quantity} - S/ ${itemSub.toFixed(2)}\n`;
+                text += `• ${item.title} x${item.quantity} - S/ ${itemSub.toFixed(2)}\n`;
             });
             const shippingOption = document.querySelector('input[name="shippingMethod"]:checked');
             const shippingCost = shippingOption ? parseFloat(shippingOption.value) : Config.SHIPPING_COST;
@@ -245,45 +257,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             UI.nextProductImage();
         });
 
-        // ============================================================
-        //  MODAL PRODUCTO: AÑADIR AL CARRITO (CORREGIDO)
-        // ============================================================
-        document.getElementById('modalAddToCartBtn')?.addEventListener('click', async () => {
+        document.getElementById('modalAddToCartBtn')?.addEventListener('click', () => {
             const modal = document.getElementById('productModal');
             const productId = parseInt(modal.dataset.productId);
-            if (!productId) return;
-            
-            const product = await Business.getProductById(productId);
-            if (product && !product.isSoldOut) {
-                Business.addToCart(product);
-                UI.closeProductModal();
-            } else {
-                UI.showToast('Producto no disponible.', 'error');
+            if (productId) {
+                const product = Business.getProductById(productId);
+                if (product && !product.isSoldOut) {
+                    Business.addToCart(product);
+                    UI.closeProductModal();
+                }
             }
         });
 
-        // ============================================================
-        //  MODAL PRODUCTO: COMPRAR AHORA (CORREGIDO)
-        // ============================================================
-        document.getElementById('modalBuyNowBtn')?.addEventListener('click', async () => {
-            const modal = document.getElementById('productModal');
-            const productId = parseInt(modal.dataset.productId);
-            if (!productId) return;
-            
-            const product = await Business.getProductById(productId);
-            if (!product) {
-                UI.showToast('Producto no encontrado.', 'error');
-                return;
-            }
-            
-            const precio = parseFloat(product.priceNumber || 0).toFixed(2);
-            const text = `¡Hola EL BUNKER! Quiero comprar el siguiente producto:\n\n• ${product.title} - S/ ${precio}\n\nGracias.`;
-            const url = `https://wa.me/51923386655?text=${encodeURIComponent(text)}`;
-            
-            console.log('🛒 Abriendo WhatsApp:', url);
-            window.open(url, '_blank');
-            UI.closeProductModal();
-        });
+      document.getElementById('modalBuyNowBtn')?.addEventListener('click', async () => {
+    const modal = document.getElementById('productModal');
+    const productId = parseInt(modal.dataset.productId);
+    if (!productId) return;
+    
+    const product = await Business.getProductById(productId);
+    if (!product) {
+        UI.showToast('Producto no encontrado.', 'error');
+        return;
+    }
+    
+    const precio = parseFloat(product.priceNumber || 0).toFixed(2);
+    const text = `¡Hola EL BUNKER! Quiero comprar el siguiente producto:\n\n• ${product.title} - S/ ${precio}\n\nGracias.`;
+    const url = `https://wa.me/51923386655?text=${encodeURIComponent(text)}`;
+    
+    console.log('🛒 Abriendo WhatsApp:', url);
+    window.open(url, '_blank');
+    UI.closeProductModal();
+});
 
         document.getElementById('closeProductModal')?.addEventListener('click', UI.closeProductModal);
 
@@ -297,9 +301,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             loginModal.classList.add('active');
         });
 
-        document.getElementById('logoutAdminBtn')?.addEventListener('click', (e) => {
+                document.getElementById('logoutAdminBtn')?.addEventListener('click', async (e) => {
             e.preventDefault();
             if (userMenuContainer) userMenuContainer.classList.remove('active');
+            await Business.logoutAdmin();
             esAdmin = false;
             Business.saveAdminSession(false);
             actualizarVisibilidadAdmin();
@@ -309,18 +314,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('closeLoginModal')?.addEventListener('click', () => loginModal.classList.remove('active'));
         document.getElementById('btnCancelLogin')?.addEventListener('click', () => loginModal.classList.remove('active'));
 
-        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+               document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const user = document.getElementById('loginUser').value;
+            const email = document.getElementById('loginUser').value;
             const pass = document.getElementById('loginPass').value;
-            if (user === Config.ADMIN_USERNAME && pass === Config.ADMIN_PASSWORD) {
+            
+            UI.showToast('Verificando credenciales...', 'info');
+            
+            const result = await Business.loginAdmin(email, pass);
+            
+            if (result.success) {
                 esAdmin = true;
                 Business.saveAdminSession(true);
                 actualizarVisibilidadAdmin();
                 loginModal.classList.remove('active');
-                UI.showToast('Bienvenido, administrador.', 'success');
+                UI.showToast(`Bienvenido, ${result.user}`, 'success');
             } else {
-                UI.showToast('Usuario o contraseña incorrectos.', 'error');
+                UI.showToast(result.error || 'Usuario o contraseña incorrectos.', 'error');
             }
         });
 
@@ -653,7 +663,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('editFormProductId').value = prod.id;
             document.getElementById('editFormTitle').value = prod.title;
-            document.getElementById('editFormPrice').value = `S/ ${parseFloat(prod.priceNumber || 0).toFixed(2)}`;
+            document.getElementById('editFormPrice').value = `S/ ${prod.priceNumber.toFixed(2)}`;
             document.getElementById('editFormQuantity').value = prod.quantity !== undefined ? prod.quantity : 1;
             document.getElementById('editFormImage').value = prod.image;
             document.getElementById('editFormSoldOut').checked = prod.isSoldOut;

@@ -257,15 +257,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             UI.nextProductImage();
         });
 
-        document.getElementById('modalAddToCartBtn')?.addEventListener('click', () => {
+           document.getElementById('modalAddToCartBtn')?.addEventListener('click', async () => {
             const modal = document.getElementById('productModal');
             const productId = parseInt(modal.dataset.productId);
-            if (productId) {
-                const product = Business.getProductById(productId);
-                if (product && !product.isSoldOut) {
-                    Business.addToCart(product);
-                    UI.closeProductModal();
-                }
+            if (!productId) return;
+            
+            const product = await Business.getProductById(productId);
+            if (product && !product.isSoldOut) {
+                Business.addToCart(product);
+                UI.closeProductModal();
+            } else {
+                UI.showToast('Producto no disponible.', 'error');
             }
         });
 

@@ -143,9 +143,9 @@ const UI = (function() {
 
             const addBtn = card.querySelector('.btn-add-cart');
             if (addBtn) {
-                addBtn.addEventListener('click', (e) => {
+                addBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    const product = Business.getProductById(item.id);
+                    const product = await Business.getProductById(item.id);
                     if (product) Business.addToCart(product);
                 });
             }
@@ -204,11 +204,11 @@ const UI = (function() {
                 <button class="btn-add-cart" data-product-id="${item.id}">AÑADIR AL CARRITO</button>
             `;
             const addBtn = card.querySelector('.btn-add-cart');
-            addBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const product = Business.getProductById(item.id);
-                if (product) Business.addToCart(product);
-            });
+            addBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const product = await Business.getProductById(item.id);
+    if (product) Business.addToCart(product);
+});
             productGrid.appendChild(card);
         });
     }
@@ -563,7 +563,7 @@ const UI = (function() {
                     <button class="btn-add-cart" data-product-id="${prod.id}">AÑADIR AL CARRITO</button>
                 `;
                 const addBtn = card.querySelector('.btn-add-cart');
-                addBtn.addEventListener('click', (e) => {
+                addBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const product = Business.getProductById(prod.id);
                     if (product) Business.addToCart(product);

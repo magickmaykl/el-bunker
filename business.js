@@ -26,27 +26,54 @@ const Business = (function() {
     }
 
     function addToCart(producto) {
-        if (producto.isSoldOut || (producto.quantity !== undefined && producto.quantity <= 0)) {
-            window.UI.showToast(`El producto "<b>${producto.title}</b>" se encuentra agotado.`, 'error');
+    if (!producto) {
+        window.UI.showToast('Producto inválido.', 'error');
+        return false;
+    }
+    if (producto.isSoldOut || (producto.quantity !== undefined && producto.quantity <= 0)) {
+        window.UI.showToast(`El producto "<b>${producto.title}</b>" se encuentra agotado.`, 'error');
+        return false;
+    }
+
+    // ✅ VALIDAR PRECIO
+    const precio = parseFloat(producto.priceNumber);
+    if (isNaN(precio) || precio <= 0) {
+        console.error('❌ Producto sin precio válido:', producto);
+        window.UI.showToast('Este producto no tiene un precio válido.', 'error');
+        return false;
+    }
+
+    // ✅ VALIDAR STOCK
+    const stockDisponible = parseInt(producto.quantity) || 0;
+    if (stockDisponible <= 0) {
+        window.UI.showToast(`No hay stock disponible de "${producto.title}".`, 'error');
+        return false;
+    }
+
+    let cart = getCart();
+    const existingIndex = cart.findIndex(item => item.title === producto.title);
+    
+    if (existingIndex > -1) {
+        // ✅ VALIDAR QUE NO EXCEDA EL STOCK
+        const cantidadActual = parseInt(cart[existingIndex].quantity) || 0;
+        if (cantidadActual >= stockDisponible) {
+            window.UI.showToast(`Solo hay <b>${stockDisponible}</b> unidad(es) disponible(s) de "${producto.title}".`, 'error');
             return false;
         }
-
-        let cart = getCart();
-        const existingIndex = cart.findIndex(item => item.title === producto.title);
-        if (existingIndex > -1) {
-            cart[existingIndex].quantity += 1;
-        } else {
-            cart.push({
-                title: producto.title,
-                price: producto.priceNumber,
-                image: producto.image,
-                quantity: 1
-            });
-        }
-        saveCart(cart);
-        window.UI.showToast(`"<b>${producto.title}</b>" se agregó al carrito con éxito.`, 'success');
-        return true;
+        cart[existingIndex].quantity = cantidadActual + 1;
+    } else {
+        cart.push({
+            title: producto.title || 'Sin título',
+            price: precio,
+            image: producto.image || Config.DEFAULT_PLACEHOLDER_IMAGE,
+            quantity: 1,
+            stockDisponible: stockDisponible  // ✅ GUARDAR STOCK PARA VALIDAR
+        });
     }
+    saveCart(cart);
+    window.UI.showToast(`"<b>${producto.title}</b>" se agregó al carrito con éxito.`, 'success');
+    return true;
+}
 
     function removeCartItem(index) {
         let cart = getCart();
@@ -54,14 +81,39 @@ const Business = (function() {
         saveCart(cart);
     }
 
-    function changeCartQty(index, delta) {
-        let cart = getCart();
-        cart[index].quantity += delta;
-        if (cart[index].quantity <= 0) {
-            cart.splice(index, 1);
-        }
+   async function changeCartQty(index, delta) {
+    let cart = getCart();
+    if (!cart[index]) return;
+    
+    const item = cart[index];
+    const cantidadActual = parseInt(item.quantity) || 0;
+    const nuevaCantidad = cantidadActual + delta;
+    
+    // Si baja a 0, eliminar del carrito
+    if (nuevaCantidad <= 0) {
+        cart.splice(index, 1);
         saveCart(cart);
+        return;
     }
+    
+    // ✅ VALIDAR STOCK SI SE ESTÁ SUMANDO
+    if (delta > 0) {
+        // Buscar el producto actual en Firestore para obtener stock real
+        const productos = await getProducts();
+        const productoReal = productos.find(p => p.title === item.title);
+        
+        if (productoReal) {
+            const stockDisponible = parseInt(productoReal.quantity) || 0;
+            if (nuevaCantidad > stockDisponible) {
+                window.UI.showToast(`Solo hay <b>${stockDisponible}</b> unidad(es) disponible(s) de "${item.title}".`, 'error');
+                return;
+            }
+        }
+    }
+    
+    cart[index].quantity = nuevaCantidad;
+    saveCart(cart);
+}
 
     function getCartSubtotal() {
         const cart = getCart();

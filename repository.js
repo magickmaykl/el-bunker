@@ -19,7 +19,7 @@ if (!firebase.apps || !firebase.apps.length) {
 }
 
 const db = firebase.firestore();
-
+const auth = firebase.auth();
 const Repository = (function() {
 
     const KEYS = Config.LS_KEYS;
@@ -259,8 +259,79 @@ const Repository = (function() {
     // ============================================================
     //  EXPOSICIÓN PÚBLICA
     // ============================================================
+    // ============================================================
+    //  AUTH - Firebase Authentication
+    // ============================================================
 
+    async function loginAdmin(email, password) {
+        try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // Verificar rol en Firestore
+            const userDoc = await db.collection('users').doc(user.email).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                if (userData.role === 'admin') {
+                    return { success: true, user: user.email, role: userData.role };
+                } else {
+                    await auth.signOut();
+                    return { success: false, error: 'No tienes permisos de administrador.' };
+                }
+            } else {
+                await auth.signOut();
+                return { success: false, error: 'Usuario no registrado como admin.' };
+            }
+        } catch (error) {
+            console.error('Error de login:', error);
+            let mensaje = 'Error al iniciar sesión.';
+            if (error.code === 'auth/user-not-found') mensaje = 'Usuario no encontrado.';
+            else if (error.code === 'auth/wrong-password') mensaje = 'Contraseña incorrecta.';
+            else if (error.code === 'auth/invalid-email') mensaje = 'Email inválido.';
+            else if (error.code === 'auth/invalid-credential') mensaje = 'Email o contraseña incorrectos.';
+            else if (error.code === 'auth/too-many-requests') mensaje = 'Demasiados intentos. Espera un momento.';
+            return { success: false, error: mensaje };
+        }
+    }
+
+    async function logoutAdmin() {
+        try {
+            await auth.signOut();
+            return true;
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+            return false;
+        }
+    }
+
+    function onAuthChange(callback) {
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await db.collection('users').doc(user.email).get();
+                    if (userDoc.exists && userDoc.data().role === 'admin') {
+                        callback({ loggedIn: true, email: user.email, role: userDoc.data().role });
+                    } else {
+                        callback({ loggedIn: false });
+                    }
+                } catch (error) {
+                    callback({ loggedIn: false });
+                }
+            } else {
+                callback({ loggedIn: false });
+            }
+        });
+    }
+
+    async function getCurrentUser() {
+        return auth.currentUser;
+    }
+	
     return {
+		loginAdmin,
+        logoutAdmin,
+        onAuthChange,
+        getCurrentUser,
         getProducts,
         saveProducts,
         getProductById,

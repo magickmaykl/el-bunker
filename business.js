@@ -375,10 +375,38 @@ const Business = (function() {
         return UI.processImageFile(file);
     }
 
+
+
+    // ============================================================
+    //  AUTENTICACIÓN
+    // ============================================================
+    async function loginAdmin(email, password) {
+        return Repository.loginAdmin(email, password);
+    }
+
+    async function logoutAdmin() {
+        return Repository.logoutAdmin();
+    }
+
+    function onAuthChange(callback) {
+        return Repository.onAuthChange(callback);
+    }
+
+    async function getCurrentUser() {
+        return Repository.getCurrentUser();
+    }
+
+
+
+
     // ============================================================
     //  EXPOSICIÓN PÚBLICA
     // ============================================================
     return {
+		 loginAdmin,
+        logoutAdmin,
+        onAuthChange,
+        getCurrentUser,
         getCart,
         saveCart,
         addToCart,

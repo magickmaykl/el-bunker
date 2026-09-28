@@ -54,7 +54,7 @@ const UI = (function() {
     }
 
     // ============================================================
-    //  CARRITO UI
+    //  CARRITO UI - PROTEGIDO CONTRA ITEMS CORRUPTOS
     // ============================================================
     function updateCartUI() {
         const cart = Business.getCart();
@@ -67,11 +67,35 @@ const UI = (function() {
         let totalQty = 0;
         let subtotal = 0;
 
+        // ✅ FILTRAR ITEMS CORRUPTOS
+        const carritoLimpio = cart.filter(item => {
+            if (!item) return false;
+            const price = parseFloat(item.price);
+            if (isNaN(price) || price <= 0) {
+                console.warn('⚠️ Item corrupto eliminado:', item);
+                return false;
+            }
+            if (!item.title) {
+                console.warn('⚠️ Item sin título eliminado:', item);
+                return false;
+            }
+            return true;
+        });
+
+        // Si hubo items corruptos, guardar carrito limpio
+        if (carritoLimpio.length !== cart.length) {
+            console.log('🧹 Carrito limpiado. Eliminados:', cart.length - carritoLimpio.length);
+            Business.saveCart(carritoLimpio);
+        }
+
         if (cartTableBody) cartTableBody.innerHTML = '';
 
-        cart.forEach((item, index) => {
-            totalQty += item.quantity;
-            const itemSubtotal = item.price * item.quantity;
+        carritoLimpio.forEach((item, index) => {
+            const price = parseFloat(item.price) || 0;
+            const quantity = parseInt(item.quantity) || 1;
+            
+            totalQty += quantity;
+            const itemSubtotal = price * quantity;
             subtotal += itemSubtotal;
 
             if (cartTableBody) {
@@ -80,15 +104,15 @@ const UI = (function() {
                     <td><span class="cart-item-remove" onclick="Business.removeCartItem(${index})">&times;</span></td>
                     <td>
                         <div class="cart-item-info">
-                            <img src="${item.image}" alt="${item.title}" loading="lazy">
+                            <img src="${item.image || Config.DEFAULT_PLACEHOLDER_IMAGE}" alt="${item.title}" loading="lazy">
                             <span class="cart-item-title">${item.title}</span>
                         </div>
                     </td>
-                    <td class="cart-item-price">S/ ${item.price.toFixed(2)}</td>
+                    <td class="cart-item-price">S/ ${price.toFixed(2)}</td>
                     <td>
                         <div class="quantity-control">
                             <button onclick="Business.changeCartQty(${index}, -1)">−</button>
-                            <input type="text" value="${item.quantity}" readonly>
+                            <input type="text" value="${quantity}" readonly>
                             <button onclick="Business.changeCartQty(${index}, 1)">+</button>
                         </div>
                     </td>
@@ -204,11 +228,13 @@ const UI = (function() {
                 <button class="btn-add-cart" data-product-id="${item.id}">AÑADIR AL CARRITO</button>
             `;
             const addBtn = card.querySelector('.btn-add-cart');
-            addBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const product = await Business.getProductById(item.id);
-    if (product) Business.addToCart(product);
-});
+            if (addBtn) {
+                addBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const product = await Business.getProductById(item.id);
+                    if (product) Business.addToCart(product);
+                });
+            }
             productGrid.appendChild(card);
         });
     }
@@ -365,7 +391,7 @@ const UI = (function() {
         updateProductModalImage();
 
         document.getElementById('modalProductTitle').innerText = product.title;
-        document.getElementById('modalProductPrice').innerText = `S/ ${product.priceNumber.toFixed(2)}`;
+        document.getElementById('modalProductPrice').innerText = `S/ ${parseFloat(product.priceNumber || 0).toFixed(2)}`;
         document.getElementById('modalDescription').innerText = product.description || 'Sin especificaciones disponibles.';
         
         const categoriaMap = {
@@ -411,7 +437,7 @@ const UI = (function() {
         if (total === 0) return;
         if (_currentDisplayIndex < 0) _currentDisplayIndex = total - 1;
         if (_currentDisplayIndex >= total) _currentDisplayIndex = 0;
-        img.src = _currentProductImages[_currentDisplayIndex];
+        img.src = _currentProductImages[_currentDisplayIndex] || Config.DEFAULT_PLACEHOLDER_IMAGE;
         indicator.textContent = `${_currentDisplayIndex+1}/${total}`;
 
         const thumbs = document.querySelectorAll('.modal-extra-images .extra-thumb');
@@ -440,7 +466,7 @@ const UI = (function() {
     }
 
     // ============================================================
-    //  CARRUSEL Y CATEGORÍAS - CORREGIDO RUTAS DE IMÁGENES
+    //  CARRUSEL Y CATEGORÍAS
     // ============================================================
     function renderCarousel(carouselConfig) {
         const wrapper = document.getElementById('sliderWrapper');
@@ -458,7 +484,6 @@ const UI = (function() {
             const titleHtml = (slide.title && slide.title.trim() !== "") 
                 ? `<div class="slide-content"><h1>${slide.title}</h1></div>` 
                 : ``;
-            // ✅ CORREGIDO: Ruta con ./assets/ para Netlify
             slideDiv.innerHTML = `
                 <img src="./assets/car${idx + 1}.png" alt="Carrusel ${idx + 1}" class="hero-png-img" onerror="this.onerror=null;this.src='${Config.DEFAULT_PLACEHOLDER_IMAGE}'">
                 ${titleHtml}
@@ -563,11 +588,13 @@ const UI = (function() {
                     <button class="btn-add-cart" data-product-id="${prod.id}">AÑADIR AL CARRITO</button>
                 `;
                 const addBtn = card.querySelector('.btn-add-cart');
-                addBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const product = Business.getProductById(prod.id);
-                    if (product) Business.addToCart(product);
-                });
+                if (addBtn) {
+                    addBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const product = await Business.getProductById(prod.id);
+                        if (product) Business.addToCart(product);
+                    });
+                }
                 grid.appendChild(card);
             });
         }
